@@ -34,18 +34,41 @@ LankanLens/
 │   ├── header.php            # Global header component
 │   ├── footer.php            # Global footer component
 │   ├── navbar.php            # Navigation bar component
-│   └── error-handler.php      # Global error handling
+│   ├── auth_helper.php       # Authentication middleware & helper functions
+│   └── error-handler.php     # Global error handling
 │
 ├── public/
 │   ├── index.php             # Landing page / Home
 │   ├── search.php            # Search results page
-│   ├── product.php           # Product detail page
+│   ├── product.php           # Product detail page (with gated content)
+│   ├── login.php             # User login page
+│   ├── register.php          # User registration page
+│   ├── logout.php            # Logout handler
+│   ├── vendor-pending.php    # Pending vendor approval page
+│   ├── unauthorized.php      # Access denied page
 │   ├── api/
 │   │   ├── search-api.php    # Search endpoint (JSON response)
 │   │   ├── booking-api.php   # Booking request endpoint
+│   │   ├── login-api.php     # Login authentication endpoint
+│   │   ├── register-api.php  # User registration endpoint
 │   │   ├── shop-list-api.php # Shop data endpoint
 │   │   └── equipment-api.php # Equipment data endpoint
 │   └── thank-you.php         # Post-booking confirmation page
+│
+├── vendor/
+│   ├── dashboard.php         # Vendor dashboard (requires auth + active status)
+│   ├── add-equipment.php     # Add new equipment listing
+│   ├── edit-equipment.php    # Edit existing equipment
+│   ├── my-listings.php       # View all vendor listings
+│   └── inquiries.php         # View booking inquiries
+│
+├── admin/
+│   ├── dashboard.php         # Admin panel (God Mode)
+│   ├── vendor-approvals.php  # Approve/reject vendor accounts
+│   ├── users.php             # User management (view, edit, suspend, delete)
+│   ├── listings.php          # Moderate all equipment listings
+│   ├── reviews.php           # Moderate shop reviews
+│   └── analytics.php         # System-wide analytics
 │
 ├── assets/
 │   ├── css/
@@ -55,6 +78,7 @@ LankanLens/
 │   ├── js/
 │   │   ├── search.js         # Search form logic & autocomplete
 │   │   ├── booking.js        # Booking modal & WhatsApp generator
+│   │   ├── auth.js           # Login/register form validation & gated content UI
 │   │   ├── empty-state.js    # Empty state interaction handlers
 │   │   ├── utils.js          # Utility functions (validation, formatting)
 │   │   ├── modal.js          # Reusable modal component
@@ -75,13 +99,20 @@ LankanLens/
 │   ├── seeds/
 │   │   ├── shops-seed.sql    # Sample shop data
 │   │   ├── equipment-seed.sql# Sample equipment data
-│   │   └── inventory-seed.sql# Sample inventory data
+│   │   ├── inventory-seed.sql# Sample inventory data
+│   │   └── users-seed.sql    # Sample user data (including admin)
 │   └── migrations/
 │       ├── 001-initial-schema.sql
-│       └── 002-add-ratings-table.sql
+│       ├── 002-add-ratings-table.sql
+│       └── 003-add-users-table.sql
+│
+├── uploads/
+│   ├── equipment/            # Uploaded equipment images
+│   └── profiles/             # User profile images
 │
 ├── logs/
 │   ├── errors.log            # PHP error logs
+│   ├── auth.log              # Authentication logs (login attempts, failures)
 │   └── database.log          # Database query logs
 │
 ├── README.md                 # Project documentation
@@ -305,6 +336,94 @@ CREATE TABLE search_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
+### Table 9: `users`
+
+Authentication and user management for customers, vendors, and admins.
+
+```sql
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('customer', 'vendor', 'admin') DEFAULT 'customer' NOT NULL,
+    status ENUM('pending', 'active', 'suspended', 'rejected') DEFAULT 'active' NOT NULL,
+    whatsapp_number VARCHAR(20),
+    phone VARCHAR(20),
+    shop_name VARCHAR(255),
+    profile_image_url VARCHAR(255),
+    preferred_cities JSON,
+    preferred_equipment_types JSON,
+    email_verified BOOLEAN DEFAULT FALSE,
+    failed_login_attempts INT DEFAULT 0,
+    last_failed_login TIMESTAMP NULL,
+    remember_token VARCHAR(100) NULL,
+    last_login_at TIMESTAMP NULL,
+    approved_by INT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (approved_by) REFERENCES users(user_id) ON DELETE SET NULL,
+    INDEX idx_email (email),
+    INDEX idx_role (role),
+    INDEX idx_status (status),
+    INDEX idx_role_status (role, status),
+    INDEX idx_remember_token (remember_token)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+**Schema Notes:**
+- `password_hash`: Use `password_hash($password, PASSWORD_BCRYPT)` in PHP
+- `role`: Determines user permissions (customer, vendor, admin)
+- `status`: Controls account activation state
+  - Customers: Default to 'active' upon registration
+  - Vendors: Default to 'pending' until admin approves
+  - Admins: Always 'active'
+- `failed_login_attempts`: Track failed logins for security (lock after 5 attempts)
+- `remember_token`: For \"Remember Me\" functionality (30-day sessions)
+- `approved_by`: Foreign key to admin user who approved vendor account
+
+### Table 10: `sessions` (Optional - Database Session Storage)
+
+Optional table for storing PHP sessions in database instead of file system.
+
+```sql
+CREATE TABLE sessions (
+    session_id VARCHAR(128) NOT NULL PRIMARY KEY,
+    user_id INT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    payload TEXT,
+    last_activity INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    INDEX idx_user_id (user_id),
+    INDEX idx_last_activity (last_activity)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### Table 11: `admin_logs`
+
+Audit trail for admin actions (vendor approvals, content moderation, user management).
+
+```sql
+CREATE TABLE admin_logs (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    admin_user_id INT NOT NULL,
+    action_type VARCHAR(100) NOT NULL,
+    target_user_id INT NULL,
+    target_equipment_id INT NULL,
+    action_details JSON,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (admin_user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (target_user_id) REFERENCES users(user_id) ON DELETE SET NULL,
+    FOREIGN KEY (target_equipment_id) REFERENCES equipment(equipment_id) ON DELETE SET NULL,
+    INDEX idx_admin (admin_user_id),
+    INDEX idx_action (action_type),
+    INDEX idx_created (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### Sample Data Insert Statements
 
 ```sql
@@ -319,6 +438,19 @@ INSERT INTO equipment_categories (category_name, category_slug, category_descrip
 INSERT INTO shops (shop_name, primary_city, shop_phone, whatsapp_number, email) VALUES
 ('Pro Lens Rental', 'Colombo', '+94701234567', '+94701234567', 'info@prolensrental.lk');
 
+-- Insert sample admin user
+INSERT INTO users (full_name, email, password_hash, role, status) VALUES
+('Admin User', 'admin@lankanlens.lk', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin', 'active');
+-- Password: 'password' (for testing only - CHANGE IN PRODUCTION)
+
+-- Insert sample customer user
+INSERT INTO users (full_name, email, password_hash, role, status) VALUES
+('John Doe', 'customer@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'customer', 'active');
+
+-- Insert sample vendor user (pending approval)
+INSERT INTO users (full_name, email, password_hash, role, status, shop_name) VALUES
+('Jane Smith', 'vendor@example.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'vendor', 'pending', 'Epic Camera Rentals');
+
 -- Insert sample equipment
 INSERT INTO equipment (category_id, equipment_name, brand, model_number, equipment_type, description, shop_id, condition_status) VALUES
 (2, 'Sony A7R IV', 'Sony', 'ILCE-7RM4', 'Full-Frame Mirrorless', '61MP Full-Frame Mirrorless Camera', 1, 'excellent');
@@ -326,6 +458,718 @@ INSERT INTO equipment (category_id, equipment_name, brand, model_number, equipme
 -- Insert sample inventory
 INSERT INTO inventory (equipment_id, shop_id, available_quantity, total_quantity, daily_rate_lkr, weekly_rate_lkr, monthly_rate_lkr) VALUES
 (1, 1, 2, 2, 15500, 100000, 350000);
+```
+
+---
+
+## Authentication Middleware & Gated Content Logic
+
+### Authentication Helper Functions
+
+**File:** `includes/auth_helper.php`
+
+This file provides middleware functions for checking authentication state and protecting routes.
+
+```php
+<?php
+/**
+ * Authentication Helper Functions
+ * Provides middleware for route protection and role-based access control
+ * 
+ * @package LankanLens
+ * @version 1.0
+ */
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+/**
+ * Check if user is logged in
+ * @return bool
+ */
+function isLoggedIn() {
+    return isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+}
+
+/**
+ * Get current user role
+ * @return string|null ('customer', 'vendor', 'admin', or null if not logged in)
+ */
+function getUserRole() {
+    return $_SESSION['role'] ?? null;
+}
+
+/**
+ * Get current user status
+ * @return string|null ('active', 'pending', 'suspended', 'rejected', or null)
+ */
+function getUserStatus() {
+    return $_SESSION['status'] ?? null;
+}
+
+/**
+ * Get current user ID
+ * @return int|null
+ */
+function getCurrentUserId() {
+    return $_SESSION['user_id'] ?? null;
+}
+
+/**
+ * Get current user's full name
+ * @return string|null
+ */
+function getCurrentUserName() {
+    return $_SESSION['full_name'] ?? null;
+}
+
+/**
+ * Check if user is a customer
+ * @return bool
+ */
+function isCustomer() {
+    return isLoggedIn() && getUserRole() === 'customer';
+}
+
+/**
+ * Check if user is an active vendor
+ * @return bool
+ */
+function isVendor() {
+    return isLoggedIn() && getUserRole() === 'vendor' && getUserStatus() === 'active';
+}
+
+/**
+ * Check if user is admin
+ * @return bool
+ */
+function isAdmin() {
+    return isLoggedIn() && getUserRole() === 'admin';
+}
+
+/**
+ * Require login - redirect to login page if not authenticated
+ * @param string|null $returnUrl URL to return to after login
+ */
+function requireLogin($returnUrl = null) {
+    if (!isLoggedIn()) {
+        $returnUrl = $returnUrl ?? $_SERVER['REQUEST_URI'];
+        $_SESSION['return_url'] = $returnUrl;
+        header('Location: /public/login.php');
+        exit;
+    }
+}
+
+/**
+ * Require specific role - redirect if user doesn't have required role
+ * @param string $requiredRole ('customer', 'vendor', 'admin')
+ */
+function requireRole($requiredRole) {
+    requireLogin();
+    
+    if (getUserRole() !== $requiredRole) {
+        header('Location: /public/unauthorized.php');
+        exit;
+    }
+    
+    // Additional check for vendors - must be active
+    if ($requiredRole === 'vendor' && getUserStatus() !== 'active') {
+        header('Location: /public/vendor-pending.php');
+        exit;
+    }
+}
+
+/**
+ * Require admin access
+ */
+function requireAdmin() {
+    requireRole('admin');
+}
+
+/**
+ * Require active vendor access
+ */
+function requireActiveVendor() {
+    requireRole('vendor');
+}
+
+/**
+ * Logout user - destroy session and redirect
+ */
+function logout() {
+    session_destroy();
+    setcookie('remember_token', '', time() - 3600, '/');
+    header('Location: /public/index.php');
+    exit;
+}
+
+/**
+ * Check if current user can access a resource
+ * @param string $resourceType ('equipment', 'shop', 'user')
+ * @param int $resourceOwnerId Owner of the resource
+ * @return bool
+ */
+function canAccess($resourceType, $resourceOwnerId) {
+    if (isAdmin()) {
+        return true; // Admin has access to everything
+    }
+    
+    return getCurrentUserId() === $resourceOwnerId;
+}
+?>
+```
+
+### Gated Content Implementation
+
+**File:** `public/product.php` (example usage)
+
+This shows how to conditionally display shop details based on authentication state.
+
+```php
+<?php
+/**
+ * Product Detail Page
+ * Displays equipment details with gated shop information
+ */
+
+require_once __DIR__ . '/../includes/auth_helper.php';
+require_once __DIR__ . '/../config/database.php';
+
+$is_logged_in = isLoggedIn();
+$equipment_id = $_GET['id'] ?? null;
+
+// Fetch equipment details
+$db = new Database();
+$equipment = $db->fetchOne(
+    \"SELECT e.*, i.daily_rate_lkr, i.weekly_rate_lkr, i.available_quantity,
+            s.shop_name, s.whatsapp_number, s.shop_phone, s.primary_city, s.shop_address
+     FROM equipment e 
+     JOIN inventory i ON e.equipment_id = i.equipment_id
+     JOIN shops s ON e.shop_id = s.shop_id 
+     WHERE e.equipment_id = ?\",
+    [$equipment_id]
+);
+
+if (!$equipment) {
+    header('Location: /public/404.php');
+    exit;
+}
+?>
+
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <title><?php echo htmlspecialchars($equipment['equipment_name']); ?> - LankanLens</title>
+    <script src=\"https://cdn.tailwindcss.com\"></script>
+</head>
+<body>
+
+<!-- Equipment Details (ALWAYS VISIBLE TO EVERYONE) -->
+<div class=\"equipment-info\">
+    <h1 class=\"text-3xl font-bold\"><?php echo htmlspecialchars($equipment['equipment_name']); ?></h1>
+    <p class=\"text-xl\">Brand: <?php echo htmlspecialchars($equipment['brand']); ?></p>
+    <p class=\"text-lg\">Daily Rate: ₨<?php echo number_format($equipment['daily_rate_lkr'], 2); ?></p>
+    <p>Condition: <span class=\"badge\"><?php echo htmlspecialchars($equipment['condition_status']); ?></span></p>
+    <p>Availability: <?php echo $equipment['available_quantity'] > 0 ? 'In Stock' : 'Unavailable'; ?></p>
+</div>
+
+<!-- Shop Details (GATED CONTENT - BLURRED FOR GUESTS) -->
+<div class=\"shop-details-container mt-6 <?php echo $is_logged_in ? '' : 'relative'; ?>\">
+    <?php if ($is_logged_in): ?>
+        <!-- AUTHENTICATED USER: Show full shop details -->
+        <div class=\"shop-info bg-gray-800 p-6 rounded-lg\">
+            <h2 class=\"text-2xl font-semibold mb-4\">Shop Information</h2>
+            <p><strong>Shop Name:</strong> <?php echo htmlspecialchars($equipment['shop_name']); ?></p>
+            <p><strong>Location:</strong> <?php echo htmlspecialchars($equipment['primary_city']); ?></p>
+            <p><strong>Address:</strong> <?php echo htmlspecialchars($equipment['shop_address']); ?></p>
+            <p><strong>WhatsApp:</strong> 
+                <a href=\"https://wa.me/<?php echo $equipment['whatsapp_number']; ?>\" 
+                   class=\"text-blue-400 hover:underline\">
+                    <?php echo htmlspecialchars($equipment['whatsapp_number']); ?>
+                </a>
+            </p>
+            <p><strong>Phone:</strong> <?php echo htmlspecialchars($equipment['shop_phone']); ?></p>
+            
+            <button class=\"rent-now-btn bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg mt-4\"
+                    onclick=\"openBookingModal(<?php echo $equipment['equipment_id']; ?>)\">
+                Rent Now via WhatsApp
+            </button>
+        </div>
+    <?php else: ?>
+        <!-- GUEST USER: Blurred content with login prompt -->
+        <div class=\"shop-info bg-gray-800 p-6 rounded-lg blur-filter\">
+            <h2 class=\"text-2xl font-semibold mb-4\">Shop Information</h2>
+            <p><strong>Shop Name:</strong> ████████ ███████ ███████</p>
+            <p><strong>Location:</strong> ████████</p>
+            <p><strong>Address:</strong> ████████████████████</p>
+            <p><strong>WhatsApp:</strong> ███████████</p>
+            <p><strong>Phone:</strong> ███████████</p>
+        </div>
+        
+        <!-- Login Overlay -->
+        <div class=\"login-overlay absolute inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center rounded-lg\">
+            <div class=\"text-center\">
+                <span class=\"lock-icon text-6xl mb-4\">🔒</span>
+                <h3 class=\"text-2xl font-bold text-white mb-2\">Login to View Shop Details</h3>
+                <p class=\"text-gray-300 mb-6\">Create a free account to contact shop owners and rent equipment</p>
+                <a href=\"/public/login.php?return=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>\" 
+                   class=\"btn-primary bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg inline-block\">
+                    Login to Rent
+                </a>
+                <p class=\"mt-4\">
+                    <a href=\"/public/register.php?return=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>\" 
+                       class=\"text-blue-400 hover:underline\">
+                        Don't have an account? Sign Up
+                    </a>
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
+</div>
+
+<style>
+.blur-filter {
+    filter: blur(8px);
+    pointer-events: none;
+    user-select: none;
+}
+
+.login-overlay {
+    pointer-events: all;
+}
+</style>
+
+</body>
+</html>
+```
+
+### Login Page Implementation
+
+**File:** `public/login.php`
+
+```php
+<?php
+/**
+ * User Login Page
+ * Handles authentication for customers, vendors, and admins
+ */
+
+require_once __DIR__ . '/../includes/auth_helper.php';
+require_once __DIR__ . '/../config/database.php';
+
+// If already logged in, redirect to appropriate dashboard
+if (isLoggedIn()) {
+    $role = getUserRole();
+    if ($role === 'admin') {
+        header('Location: /admin/dashboard.php');
+    } elseif ($role === 'vendor' && getUserStatus() === 'active') {
+        header('Location: /vendor/dashboard.php');
+    } else {
+        header('Location: /public/index.php');
+    }
+    exit;
+}
+
+$error_message = '';
+$return_url = $_GET['return'] ?? $_SESSION['return_url'] ?? '/public/index.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $remember = isset($_POST['remember']);
+    
+    // Validate inputs
+    if (empty($email) || empty($password)) {
+        $error_message = 'Please enter both email and password.';
+    } else {
+        $db = new Database();
+        
+        // Fetch user by email
+        $user = $db->fetchOne(
+            \"SELECT user_id, full_name, email, password_hash, role, status, 
+                    failed_login_attempts, last_failed_login
+             FROM users 
+             WHERE email = ?\",
+            [$email]
+        );
+        
+        if (!$user) {
+            $error_message = 'Invalid email or password.';
+        } else {
+            // Check if account is locked (5 failed attempts in 15 minutes)
+            if ($user['failed_login_attempts'] >= 5) {
+                $lockout_time = strtotime($user['last_failed_login']) + (15 * 60);
+                if (time() < $lockout_time) {
+                    $minutes_left = ceil(($lockout_time - time()) / 60);
+                    $error_message = \"Account temporarily locked. Try again in {$minutes_left} minutes.\";
+                } else {
+                    // Reset failed attempts after lockout period
+                    $db->query(\"UPDATE users SET failed_login_attempts = 0 WHERE user_id = ?\", [$user['user_id']]);
+                }
+            }
+            
+            // Verify password
+            if (empty($error_message) && password_verify($password, $user['password_hash'])) {
+                // Check account status
+                if ($user['status'] === 'suspended') {
+                    $error_message = 'Your account has been suspended. Please contact admin.';
+                } elseif ($user['status'] === 'rejected') {
+                    $error_message = 'Your vendor application was not approved. Contact admin for details.';
+                } else {
+                    // Successful login
+                    $_SESSION['user_id'] = $user['user_id'];
+                    $_SESSION['email'] = $user['email'];
+                    $_SESSION['role'] = $user['role'];
+                    $_SESSION['status'] = $user['status'];
+                    $_SESSION['full_name'] = $user['full_name'];
+                    
+                    // Reset failed login attempts
+                    $db->query(\"UPDATE users SET failed_login_attempts = 0, last_login_at = NOW() WHERE user_id = ?\", 
+                              [$user['user_id']]);
+                    
+                    // Handle \"Remember Me\"
+                    if ($remember) {
+                        $token = bin2hex(random_bytes(32));
+                        setcookie('remember_token', $token, time() + (30 * 24 * 60 * 60), '/', '', true, true);
+                        $db->query(\"UPDATE users SET remember_token = ? WHERE user_id = ?\", [$token, $user['user_id']]);
+                    }
+                    
+                    // Redirect based on role and status
+                    if ($user['role'] === 'admin') {
+                        header('Location: /admin/dashboard.php');
+                    } elseif ($user['role'] === 'vendor' && $user['status'] === 'pending') {
+                        header('Location: /public/vendor-pending.php');
+                    } elseif ($user['role'] === 'vendor' && $user['status'] === 'active') {
+                        header('Location: /vendor/dashboard.php');
+                    } else {
+                        // Customer or default
+                        header('Location: ' . $return_url);
+                    }
+                    exit;
+                }
+            } else {
+                // Invalid password - increment failed attempts
+                if (empty($error_message)) {
+                    $db->query(
+                        \"UPDATE users SET failed_login_attempts = failed_login_attempts + 1, 
+                                         last_failed_login = NOW() 
+                         WHERE user_id = ?\",
+                        [$user['user_id']]
+                    );
+                    $error_message = 'Invalid email or password.';
+                }
+            }
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Login - LankanLens</title>
+    <script src=\"https://cdn.tailwindcss.com\"></script>
+</head>
+<body class=\"bg-gray-900 text-white\">
+    
+<div class=\"min-h-screen flex items-center justify-center\">
+    <div class=\"bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full\">
+        <h1 class=\"text-3xl font-bold mb-6 text-center\">Login to LankanLens</h1>
+        
+        <?php if ($error_message): ?>
+            <div class=\"bg-red-500 bg-opacity-20 border border-red-500 text-red-200 px-4 py-3 rounded mb-4\">
+                <?php echo htmlspecialchars($error_message); ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method=\"POST\" action=\"\" class=\"space-y-4\">
+            <div>
+                <label for=\"email\" class=\"block text-sm font-medium mb-2\">Email Address</label>
+                <input type=\"email\" name=\"email\" id=\"email\" required
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"your.email@example.com\"
+                       value=\"<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>\">
+            </div>
+            
+            <div>
+                <label for=\"password\" class=\"block text-sm font-medium mb-2\">Password</label>
+                <input type=\"password\" name=\"password\" id=\"password\" required
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"Enter your password\">
+            </div>
+            
+            <div class=\"flex items-center\">
+                <input type=\"checkbox\" name=\"remember\" id=\"remember\" class=\"mr-2\">
+                <label for=\"remember\" class=\"text-sm\">Remember me for 30 days</label>
+            </div>
+            
+            <button type=\"submit\" 
+                    class=\"w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition\">
+                Login
+            </button>
+        </form>
+        
+        <p class=\"text-center mt-6 text-gray-400\">
+            Don't have an account? 
+            <a href=\"/public/register.php?return=<?php echo urlencode($return_url); ?>\" 
+               class=\"text-blue-400 hover:underline\">Sign Up</a>
+        </p>
+    </div>
+</div>
+
+</body>
+</html>
+```
+
+### Registration Page Implementation
+
+**File:** `public/register.php`
+
+```php
+<?php
+/**
+ * User Registration Page
+ * Handles new user sign-ups with role selection
+ */
+
+require_once __DIR__ . '/../includes/auth_helper.php';
+require_once __DIR__ . '/../config/database.php';
+
+// If already logged in, redirect
+if (isLoggedIn()) {
+    header('Location: /public/index.php');
+    exit;
+}
+
+$error_message = '';
+$success_message = '';
+$return_url = $_GET['return'] ?? '/public/index.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $full_name = trim($_POST['full_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm_password'] ?? '';
+    $role = $_POST['role'] ?? 'customer';
+    $shop_name = trim($_POST['shop_name'] ?? '');
+    
+    // Validation
+    if (strlen($full_name) < 3 || strlen($full_name) > 255) {
+        $error_message = 'Full name must be between 3 and 255 characters.';
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error_message = 'Please enter a valid email address.';
+    } elseif (strlen($password) < 8) {
+        $error_message = 'Password must be at least 8 characters long.';
+    } elseif ($password !== $confirm_password) {
+        $error_message = 'Passwords do not match.';
+    } elseif (!in_array($role, ['customer', 'vendor'])) {
+        $error_message = 'Invalid role selected.';
+    } else {
+        $db = new Database();
+        
+        // Check if email already exists
+        $existing = $db->fetchOne(\"SELECT user_id FROM users WHERE email = ?\", [$email]);
+        
+        if ($existing) {
+            $error_message = 'An account with this email already exists.';
+        } else {
+            // Hash password
+            $password_hash = password_hash($password, PASSWORD_BCRYPT);
+            
+            // Determine status based on role
+            $status = ($role === 'vendor') ? 'pending' : 'active';
+            
+            // Insert user
+            $result = $db->query(
+                \"INSERT INTO users (full_name, email, password_hash, role, status, shop_name) 
+                 VALUES (?, ?, ?, ?, ?, ?)\",
+                [$full_name, $email, $password_hash, $role, $status, $shop_name]
+            );
+            
+            if ($result) {
+                $user_id = $db->lastInsertId();
+                
+                // Create session for customer, redirect vendor to pending page
+                if ($role === 'customer') {
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['email'] = $email;
+                    $_SESSION['role'] = $role;
+                    $_SESSION['status'] = $status;
+                    $_SESSION['full_name'] = $full_name;
+                    
+                    header('Location: ' . $return_url);
+                    exit;
+                } else {
+                    // Vendor - redirect to pending page
+                    $_SESSION['user_id'] = $user_id;
+                    $_SESSION['email'] = $email;
+                    $_SESSION['role'] = $role;
+                    $_SESSION['status'] = $status;
+                    $_SESSION['full_name'] = $full_name;
+                    
+                    header('Location: /public/vendor-pending.php');
+                    exit;
+                }
+            } else {
+                $error_message = 'Failed to create account. Please try again.';
+            }
+        }
+    }
+}
+?>
+
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"UTF-8\">
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+    <title>Sign Up - LankanLens</title>
+    <script src=\"https://cdn.tailwindcss.com\"></script>
+</head>
+<body class=\"bg-gray-900 text-white\">
+
+<div class=\"min-h-screen flex items-center justify-center py-12\">
+    <div class=\"bg-gray-800 p-8 rounded-lg shadow-lg max-w-md w-full\">
+        <h1 class=\"text-3xl font-bold mb-6 text-center\">Create Your Account</h1>
+        
+        <?php if ($error_message): ?>
+            <div class=\"bg-red-500 bg-opacity-20 border border-red-500 text-red-200 px-4 py-3 rounded mb-4\">
+                <?php echo htmlspecialchars($error_message); ?>
+            </div>
+        <?php endif; ?>
+        
+        <form method=\"POST\" action=\"\" class=\"space-y-4\">
+            <div>
+                <label for=\"full_name\" class=\"block text-sm font-medium mb-2\">Full Name</label>
+                <input type=\"text\" name=\"full_name\" id=\"full_name\" required
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"Enter your full name\"
+                       value=\"<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>\">
+            </div>
+            
+            <div>
+                <label for=\"email\" class=\"block text-sm font-medium mb-2\">Email Address</label>
+                <input type=\"email\" name=\"email\" id=\"email\" required
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"your.email@example.com\"
+                       value=\"<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>\">
+            </div>
+            
+            <div>
+                <label for=\"password\" class=\"block text-sm font-medium mb-2\">Password</label>
+                <input type=\"password\" name=\"password\" id=\"password\" required minlength=\"8\"
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"Create a strong password (min 8 chars)\">
+            </div>
+            
+            <div>
+                <label for=\"confirm_password\" class=\"block text-sm font-medium mb-2\">Confirm Password</label>
+                <input type=\"password\" name=\"confirm_password\" id=\"confirm_password\" required
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"Re-enter your password\">
+            </div>
+            
+            <div>
+                <label class=\"block text-sm font-medium mb-3\">I am registering as:</label>
+                <div class=\"space-y-2\">
+                    <div class=\"flex items-start\">
+                        <input type=\"radio\" name=\"role\" value=\"customer\" id=\"role_customer\" 
+                               checked class=\"mt-1 mr-3\">
+                        <label for=\"role_customer\">
+                            <span class=\"font-medium\">Customer</span>
+                            <p class=\"text-sm text-gray-400\">I want to rent camera equipment</p>
+                        </label>
+                    </div>
+                    <div class=\"flex items-start\">
+                        <input type=\"radio\" name=\"role\" value=\"vendor\" id=\"role_vendor\" 
+                               class=\"mt-1 mr-3\" onchange=\"toggleShopNameField()\">
+                        <label for=\"role_vendor\">
+                            <span class=\"font-medium\">Vendor</span>
+                            <p class=\"text-sm text-gray-400\">I want to list my equipment for rent (requires admin approval)</p>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div id=\"shop_name_field\" style=\"display: none;\">
+                <label for=\"shop_name\" class=\"block text-sm font-medium mb-2\">Shop Name (Optional)</label>
+                <input type=\"text\" name=\"shop_name\" id=\"shop_name\"
+                       class=\"w-full px-4 py-2 bg-gray-700 rounded focus:outline-none focus:ring-2 focus:ring-orange-500\"
+                       placeholder=\"Your shop or business name\"
+                       value=\"<?php echo htmlspecialchars($_POST['shop_name'] ?? ''); ?>\">
+            </div>
+            
+            <button type=\"submit\" 
+                    class=\"w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 rounded-lg transition\">
+                Create Account
+            </button>
+        </form>
+        
+        <p class=\"text-center mt-6 text-gray-400\">
+            Already have an account? 
+            <a href=\"/public/login.php?return=<?php echo urlencode($return_url); ?>\" 
+               class=\"text-blue-400 hover:underline\">Login</a>
+        </p>
+    </div>
+</div>
+
+<script>
+function toggleShopNameField() {
+    const vendorRadio = document.getElementById('role_vendor');
+    const shopNameField = document.getElementById('shop_name_field');
+    shopNameField.style.display = vendorRadio.checked ? 'block' : 'none';
+}
+</script>
+
+</body>
+</html>
+```
+
+### Protecting Routes - Usage Examples
+
+**Vendor Dashboard Protection:**
+```php
+<?php
+// vendor/dashboard.php
+require_once __DIR__ . '/../includes/auth_helper.php';
+requireActiveVendor(); // Only active vendors can access
+
+// Dashboard code here...
+?>
+```
+
+**Admin Panel Protection:**
+```php
+<?php
+// admin/dashboard.php
+require_once __DIR__ . '/../includes/auth_helper.php';
+requireAdmin(); // Only admins can access
+
+// Admin panel code here...
+?>
+```
+
+**Product Page with Gated Content:**
+```php
+<?php
+// public/product.php
+require_once __DIR__ . '/../includes/auth_helper.php';
+
+$is_logged_in = isLoggedIn();
+
+// Fetch equipment and shop details...
+
+// In HTML, conditionally render shop details:
+if ($is_logged_in) {
+    // Show full shop contact info
+} else {
+    // Show blurred content with login CTA
+}
+?>
 ```
 
 ---

@@ -1,0 +1,34 @@
+# Environment Configuration
+.env
+
+# Logs
+/logs
+*.log
+
+# User Uploads
+/uploads
+
+# Dependencies
+/node_modules
+/vendor
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary Files
+*.tmp
+*.temp
+*.cache
+
+# PHP Cache
+*.cache
+opcache/

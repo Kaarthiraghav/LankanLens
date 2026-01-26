@@ -289,25 +289,181 @@ Unlike international platforms, LankanLens understands the local market:
   - Minimum 1 rental completion required to leave review
   - Reviews should display: Equipment condition, Communication, Fairness of pricing, Timeliness of delivery
 
-### 5. User Account Management
+### 5. Authentication System & User Account Management
 
-#### 5.1 Customer Accounts (Optional/Basic)
-- **Requirement:** Enable personalization without mandatory login
-  - Optional account creation via email or WhatsApp number
-  - Save favorite equipment for quick access
-  - View rental inquiry history
-  - Save preferred cities/equipment types for faster searches
-  - Push notifications for new availability in saved categories
-  - No password required option (WhatsApp-based login)
+#### 5.1 User Registration & Login
+- **Requirement:** Complete authentication system with role-based access control
+  - **Sign-up Flow:**
+    - Full Name (required, 3-50 characters)
+    - Email address (required, unique, validated format)
+    - Password (required, min 8 characters, hashed with bcrypt)
+    - Role Selection (required):
+      - **Customer** - Default role, immediate access
+      - **Vendor** - Requires admin approval before activation
+    - Terms & Conditions acceptance (required checkbox)
+    - Redirect to appropriate dashboard after successful signup
+  
+  - **Login Flow:**
+    - Email and Password fields
+    - "Remember Me" checkbox (extends session to 30 days)
+    - "Forgot Password" link (future enhancement)
+    - Session-based authentication using PHP `$_SESSION['user_id']`
+    - Role-based redirect (Customer → Home, Vendor → Dashboard, Admin → Admin Panel)
+    - Failed login: Show error "Invalid email or password" (generic for security)
+    - Lock account after 5 failed attempts in 15 minutes
 
-#### 5.2 Shop Owner Accounts
-- **Requirement:** Administrative access for inventory management
-  - Account creation with shop verification
-  - Inventory management dashboard
-  - Analytics and inquiry tracking
-  - Equipment editing and image upload
-  - Promotion/feature tools (paid optional feature)
-  - Analytics: views per equipment, inquiries per day, response rate
+  - **Session Management:**
+    - Store: `user_id`, `email`, `role`, `status` in `$_SESSION`
+    - Session timeout: 2 hours of inactivity
+    - "Keep me logged in" option: 30-day cookie
+    - Secure session settings: httponly, samesite=strict, secure (if HTTPS)
+    - Logout clears session and redirects to home page
+
+#### 5.2 User Roles & Permissions
+- **Requirement:** Four-tier role system with distinct capabilities
+  
+  **Role 1: Guest/Public** (Not Logged In)
+  - Can browse all equipment listings
+  - Can search and filter equipment
+  - **RESTRICTED:**
+    - Shop details are blurred/hidden
+    - "Rent Now" buttons disabled/hidden
+    - WhatsApp contact info not visible
+    - Shop owner name shows as "Login to View"
+    - Shop address shows as "Login to View Full Address"
+  - See "Login to View Shop Details" call-to-action on all product cards
+  - Clicking any gated element redirects to login page with return URL
+  
+  **Role 2: Customer** (Authenticated, Default)
+  - Full access to browse all equipment listings
+  - Can view complete shop details (name, address, contact)
+  - Can click "Rent Now" to trigger WhatsApp booking
+  - Can view shop owner WhatsApp number
+  - Can save favorite equipment (future enhancement)
+  - Can view booking history
+  - **RESTRICTED:**
+    - Cannot access vendor dashboard
+    - Cannot list their own equipment
+  
+  **Role 3: Vendor** (Authenticated, Admin-Approved)
+  - All Customer permissions PLUS:
+  - Access to "Vendor Dashboard" (dedicated page)
+  - Can add/edit/delete their own equipment listings
+  - Can upload product images (max 5 per item, 5MB each)
+  - Can set pricing tiers (daily, weekly, monthly rates)
+  - Can manage inventory quantities
+  - Can view inquiries sent to their equipment
+  - Can view analytics (views, clicks, inquiry conversion rate)
+  - Status-dependent access:
+    - **Pending:** Account created but waiting for admin approval
+    - **Active:** Full vendor privileges
+    - **Suspended:** Read-only access, cannot add listings
+  - **RESTRICTED:**
+    - Cannot access admin panel
+    - Cannot approve other vendors
+    - Cannot edit other vendors' listings
+  
+  **Role 4: Admin** (God Mode)
+  - Full system access:
+  - Manage all users (view, edit, delete, suspend)
+  - Approve or reject pending vendor accounts
+  - View vendor approval queue with shop verification details
+  - Moderate all equipment listings (edit, remove inappropriate content)
+  - Delete spam or fraudulent listings
+  - View system-wide analytics dashboard
+  - Manage shop reviews (approve, reject, delete spam)
+  - Access logs and system health metrics
+  - Override any user permission as needed
+  - Promote users to admin role (system-wide control)
+
+#### 5.3 Gated Content Feature
+- **Requirement:** Implement content blurring for non-authenticated users
+  - **What is Gated:**
+    - Shop name (show "Login to View Shop")
+    - Shop address (show partial: "Colombo 4 - Login for Full Address")
+    - WhatsApp number (fully hidden)
+    - Phone number (fully hidden)
+    - Shop owner contact details
+    - "Rent Now" button (replaced with "Login to Rent" button)
+    - Shop reviews and ratings (show count, hide content)
+  
+  - **What is Public:**
+    - Equipment name, brand, model
+    - Equipment images and description
+    - Equipment specifications (sensor, resolution, etc.)
+    - Daily/weekly/monthly rental rates
+    - Availability status (In Stock, Limited, Unavailable)
+    - Equipment condition (Excellent, Good, Fair)
+    - Number of reviews (e.g., "234 reviews" - but text is hidden)
+  
+  - **Visual Implementation:**
+    - Use CSS blur filter: `filter: blur(8px);`
+    - Overlay semi-transparent div with text: "🔒 Login to View"
+    - Disable pointer events: `pointer-events: none;`
+    - Show login prompt modal when user clicks gated content
+  
+  - **Technical Implementation:**
+    - Check `$_SESSION['user_id']` in PHP before rendering shop details
+    - Use conditional rendering: `if (isset($_SESSION['user_id'])) { ... }`
+    - JavaScript can also check authentication state via API endpoint
+    - Return `isAuthenticated: true/false` in search API response
+
+#### 5.4 Vendor Approval Workflow
+- **Requirement:** Admin must approve vendors before they can list equipment
+  - **Vendor Sign-up:**
+    - User selects "Vendor" role during registration
+    - Status automatically set to `pending`
+    - Confirmation email: "Your vendor account is pending approval"
+    - Redirect to "Pending Approval" page (cannot access vendor dashboard)
+  
+  - **Admin Approval Process:**
+    - Admin logs into admin panel
+    - Navigate to "Vendor Approvals" section
+    - View list of pending vendors with details:
+      - Full name, email, shop name (if provided)
+      - Registration date
+      - Contact information
+    - Admin actions:
+      - **Approve:** Change status to `active`, send email notification
+      - **Reject:** Change status to `rejected`, send rejection email with reason
+      - **Request More Info:** Send email asking for verification documents
+  
+  - **Vendor Notification:**
+    - Email sent on approval: "Congratulations! Your vendor account is now active"
+    - Include link to vendor dashboard
+    - First login after approval shows welcome tutorial (optional)
+  
+  - **Access Control:**
+    - Vendor with `pending` status sees: "Your account is under review. You'll receive an email once approved."
+    - Vendor with `rejected` status sees: "Your vendor application was not approved. Contact admin for details."
+    - Only vendors with `active` status can access vendor dashboard
+
+#### 5.5 Customer Accounts
+- **Requirement:** Standard customer account with basic features
+  - Immediate activation upon sign-up (no approval needed)
+  - Can view all equipment and shop details
+  - Can trigger WhatsApp booking requests
+  - View booking history (logged inquiries)
+  - Save favorite equipment (future enhancement)
+  - Update profile: name, email, password change
+  - Delete account (GDPR compliance)
+
+#### 5.6 Admin Account
+- **Requirement:** System administrator with full control
+  - Pre-seeded admin account in database
+  - Cannot be created via public sign-up
+  - Access admin panel at `/admin/` directory
+  - View dashboard with key metrics:
+    - Total users (by role)
+    - Pending vendor approvals
+    - Total equipment listings
+    - Total shops
+    - Search volume (daily/weekly/monthly)
+  - User Management: View, edit, suspend, delete any user
+  - Vendor Management: Approve, reject, suspend vendors
+  - Content Moderation: Edit or delete equipment listings
+  - Review Moderation: Approve or reject shop reviews
+  - System logs: View error logs, search logs, booking logs
 
 ### 6. Search & Listing Performance
 
@@ -628,19 +784,44 @@ Shop Rating Record:
 
 ### 3. User Database Schema
 
-#### 3.1 Customer Account Table
+#### 3.1 Users Table (Unified Authentication)
 ```
-Customer Record:
-├── ID
-├── Name (optional)
-├── Email
-├── WhatsApp Number
-├── Phone
-├── Preferred Cities (JSON array)
-├── Preferred Equipment Types (JSON array)
-├── Account Created Date
-├── Last Login
-├── Notification Preferences
+User Record:
+├── user_id (INT, Primary Key, Auto Increment)
+├── full_name (VARCHAR 255, NOT NULL)
+├── email (VARCHAR 255, UNIQUE, NOT NULL)
+├── password_hash (VARCHAR 255, NOT NULL) - Bcrypt hashed
+├── role (ENUM: 'customer', 'vendor', 'admin') - Default: 'customer'
+├── status (ENUM: 'pending', 'active', 'suspended', 'rejected') - Default: 'active'
+│   └── Note: Customers default to 'active', Vendors default to 'pending'
+├── whatsapp_number (VARCHAR 20, Optional)
+├── phone (VARCHAR 20, Optional)
+├── shop_name (VARCHAR 255, Optional) - Only for vendors
+├── profile_image_url (VARCHAR 255, Optional)
+├── preferred_cities (JSON array, Optional)
+├── preferred_equipment_types (JSON array, Optional)
+├── email_verified (BOOLEAN, Default: FALSE)
+├── failed_login_attempts (INT, Default: 0)
+├── last_failed_login (TIMESTAMP, NULL)
+├── remember_token (VARCHAR 100, NULL)
+├── last_login_at (TIMESTAMP, NULL)
+├── created_at (TIMESTAMP, Default: CURRENT_TIMESTAMP)
+├── updated_at (TIMESTAMP, Default: CURRENT_TIMESTAMP ON UPDATE)
+└── approved_by (INT, NULL) - Foreign key to admin user_id who approved vendor
+
+Indexes:
+├── UNIQUE idx_email (email)
+├── INDEX idx_role (role)
+├── INDEX idx_status (status)
+└── INDEX idx_role_status (role, status)
+```
+
+#### 3.2 Customer Account Features (For Authenticated Users)
+```
+Customer Record Extensions:
+├── Saved Favorites (equipment_id array, future)
+├── Booking History (linked via booking_requests table)
+├── Notification Preferences (JSON)
 └── Account Status (Active, Suspended)
 ```
 

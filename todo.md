@@ -9,42 +9,225 @@
 ## Phase 1: Environment & Database Setup
 
 ### Folder Structure & Configuration
-- [ ] Create project folder structure: `/config`, `/includes`, `/public`, `/api`, `/assets/css`, `/assets/js`, `/assets/images`, `/database`, `/logs`, `/uploads`
-- [ ] Create `.env.example` file with DB credentials template
-- [ ] Create `.env` file with local database credentials (do NOT commit)
-- [ ] Add `.gitignore` to exclude `.env`, `/logs`, `/uploads`, `/node_modules`
-- [ ] Create `config/config.php` with app constants and environment variable loader
+- [x] Create project folder structure: `/config`, `/includes`, `/public`, `/api`, `/vendor`, `/admin`, `/assets/css`, `/assets/js`, `/assets/images`, `/database`, `/logs`, `/uploads`
+- [x] Create `.env.example` file with DB credentials template
+- [x] Create `.env` file with local database credentials (do NOT commit)
+- [x] Add `.gitignore` to exclude `.env`, `/logs`, `/uploads`, `/node_modules`
+- [x] Create `config/config.php` with app constants and environment variable loader
 
 ### MySQL Database & Schema
-- [ ] Create MySQL database `lankanlens` with UTF8MB4 charset
-- [ ] Create `database/schema.sql` with all 8 table definitions:
-  - [ ] `shops` table (shop_id, shop_name, phone, whatsapp_number, city, etc.)
-  - [ ] `equipment_categories` table (category_id, category_name, slug)
-  - [ ] `equipment` table (equipment_id, category_id, brand, model, shop_id, description)
-  - [ ] `inventory` table (inventory_id, equipment_id, shop_id, daily_rate_lkr, available_quantity)
-  - [ ] `booking_requests` table (request_id, user_name, equipment_id, shop_id, rental_duration_days)
-  - [ ] `shop_locations` table (location_id, shop_id, city_name, address)
-  - [ ] `shop_reviews` table (review_id, shop_id, user_name, rating)
-  - [ ] `search_logs` table (log_id, search_term, search_city, result_count)
-- [ ] Create database/migrations folder for future schema changes
-- [ ] Execute schema.sql to create all tables in MySQL
+- [x] Create MySQL database `lankanlens` with UTF8MB4 charset
+- [x] Create `database/schema.sql` with all 11 table definitions:
+  - [x] `shops` table (shop_id, shop_name, phone, whatsapp_number, city, etc.)
+  - [x] `equipment_categories` table (category_id, category_name, slug)
+  - [x] `equipment` table (equipment_id, category_id, brand, model, shop_id, description)
+  - [x] `inventory` table (inventory_id, equipment_id, shop_id, daily_rate_lkr, available_quantity)
+  - [x] `booking_requests` table (request_id, user_name, equipment_id, shop_id, rental_duration_days)
+  - [x] `shop_locations` table (location_id, shop_id, city_name, address)
+  - [x] `shop_reviews` table (review_id, shop_id, user_name, rating)
+  - [x] `search_logs` table (log_id, search_term, search_city, result_count)
+  - [x] `users` table (user_id, full_name, email, password_hash, role, status, approved_by)
+  - [x] `sessions` table (session_id, user_id, payload, last_activity) - Optional
+  - [x] `admin_logs` table (log_id, admin_user_id, action_type, target_user_id)
+- [x] Create database/migrations folder for future schema changes
+- [x] Execute schema.sql to create all tables in MySQL
 
 ### PDO Database Connection
-- [ ] Create `config/database.php` with PDO connection class
-  - [ ] Implement `__construct()` to load environment variables and establish PDO connection
-  - [ ] Implement `query()` method with prepared statements
-  - [ ] Implement `fetchOne()` and `fetchAll()` methods
-  - [ ] Implement `insert()`, `update()`, `delete()` helper methods
-  - [ ] Add error logging to `/logs/errors.log`
+- [x] Create `config/database.php` with PDO connection class
+  - [x] Implement `__construct()` to load environment variables and establish PDO connection
+  - [x] Implement `query()` method with prepared statements
+  - [x] Implement `fetchOne()` and `fetchAll()` methods
+  - [x] Implement `insert()`, `update()`, `delete()` helper methods
+  - [x] Add error logging to `/logs/errors.log`
 
 ### Project Bootstrap
-- [ ] Create `/logs` directory with write permissions (chmod 755)
-- [ ] Create `/uploads` directory with write permissions
-- [ ] Test PDO connection by running a simple query in terminal: `php -r "require 'config/database.php'; $db = new Database();"`
+- [x] Create `/logs` directory with write permissions (chmod 755)
+- [x] Create `/uploads` directory with write permissions
+- [x] Test PDO connection by running a simple query in terminal: `php -r "require 'config/database.php'; $db = new Database();"`
 
 ---
 
-## Phase 2: Shared Components & Layout
+## Phase 3.5: Authentication System (LOGIN, REGISTER, GATED CONTENT)
+
+### User Registration Page
+- [x] Create `public/register.php` with:
+  - [x] Registration form with fields:
+    - [x] Full Name (input, required, 3-255 chars)
+    - [x] Email (input type="email", required, unique validation)
+    - [x] Password (input type="password", required, min 8 chars)
+    - [x] Confirm Password (input type="password", required, must match)
+    - [x] Role Selection (radio buttons):
+      - [x] Customer (default, immediate activation)
+      - [x] Vendor (requires admin approval)
+    - [x] Shop Name (input, optional, shown if Vendor role selected)
+    - [x] Terms & Conditions checkbox (required)
+  - [x] Client-side validation (JavaScript in `assets/js/auth.js`)
+  - [x] Password strength indicator (Weak, Medium, Strong)
+  - [x] Real-time email uniqueness check via AJAX (optional)
+  - [x] Submit button with loading state
+  - [x] Link to login page: "Already have an account? Login"
+
+### User Registration Backend
+- [x] Create registration handler in `public/register.php` (POST section):
+  - [x] Validate all inputs server-side:
+    - [x] Full name: 3-255 characters
+    - [x] Email: Valid format, check uniqueness in database
+    - [x] Password: Min 8 characters, hash with `password_hash($password, PASSWORD_BCRYPT)`
+    - [x] Confirm password: Must match password
+    - [x] Role: Must be 'customer' or 'vendor'
+  - [x] Set account status based on role:
+    - [x] Customer: status = 'active' (instant activation)
+    - [x] Vendor: status = 'pending' (awaits admin approval)
+  - [x] Insert user into `users` table
+  - [x] Create session variables:
+    - [x] `$_SESSION['user_id']`
+    - [x] `$_SESSION['email']`
+    - [x] `$_SESSION['role']`
+    - [x] `$_SESSION['status']`
+    - [x] `$_SESSION['full_name']`
+  - [x] Redirect based on role:
+    - [x] Customer: Redirect to return URL or home page
+    - [x] Vendor: Redirect to `vendor-pending.php` with pending message
+  - [x] Handle errors: Display validation errors with red messages
+
+### User Login Page
+- [x] Create `public/login.php` with:
+  - [x] Login form with fields:
+    - [x] Email (input type="email", required)
+    - [x] Password (input type="password", required)
+    - [x] Remember Me checkbox (optional, extends session to 30 days)
+  - [x] Submit button with loading state: "Logging In..."
+  - [x] "Forgot Password?" link (placeholder for future)
+  - [x] Link to registration: "Don't have an account? Sign Up"
+  - [x] Accept return URL parameter: `?return=/public/product.php?id=5`
+
+### User Login Backend
+- [ ] Create login handler in `public/login.php` (POST section):
+  - [ ] Validate email and password (not empty)
+  - [ ] Query `users` table by email
+  - [ ] If email not found: Return generic error "Invalid email or password"
+  - [ ] Check failed login attempts:
+    - [ ] If `failed_login_attempts >= 5` and within 15 minutes: Lock account temporarily
+    - [ ] Display message: "Account locked. Try again in X minutes."
+  - [ ] Verify password using `password_verify($password, $password_hash)`
+  - [ ] If password incorrect:
+    - [ ] Increment `failed_login_attempts` in database
+    - [ ] Update `last_failed_login` timestamp
+    - [ ] Return error "Invalid email or password"
+  - [ ] If password correct:
+    - [ ] Check account status:
+      - [ ] If 'suspended': Error "Your account has been suspended. Contact admin."
+      - [ ] If 'rejected': Error "Your vendor application was not approved."
+      - [ ] If 'pending' and role='vendor': Redirect to `vendor-pending.php`
+      - [ ] If 'active': Proceed with login
+    - [ ] Reset `failed_login_attempts` to 0
+    - [ ] Update `last_login_at` timestamp
+    - [ ] Create session with user data
+    - [ ] If "Remember Me" checked:
+      - [ ] Generate random token: `bin2hex(random_bytes(32))`
+      - [ ] Store token in database `remember_token` field
+      - [ ] Set cookie with 30-day expiration
+    - [ ] Redirect based on role:
+      - [ ] Admin → `/admin/dashboard.php`
+      - [ ] Vendor (active) → `/vendor/dashboard.php`
+      - [ ] Customer → Return URL or `/public/index.php`
+
+### Logout Handler
+- [ ] Create `public/logout.php`:
+  - [ ] Destroy session with `session_destroy()`
+  - [ ] Clear remember_token cookie
+  - [ ] Clear remember_token in database
+  - [ ] Redirect to home page with success message
+
+### Vendor Pending Approval Page
+- [ ] Create `public/vendor-pending.php`:
+  - [ ] Check if user is logged in and role='vendor' and status='pending'
+  - [ ] Display pending approval message:
+    - [ ] Icon: Hourglass or pending status icon
+    - [ ] Header: "Your Vendor Account is Pending Approval"
+    - [ ] Message: "Thank you for registering! Our admin team will review your application within 1-2 business days."
+    - [ ] Email notification: "You'll receive an email at [email] once approved"
+    - [ ] Option to browse equipment as customer while waiting
+  - [ ] Button: "Browse Equipment" → Redirect to home page
+  - [ ] Logout link
+
+### Unauthorized Access Page
+- [ ] Create `public/unauthorized.php`:
+  - [ ] Display "Access Denied" message
+  - [ ] Explain: "You don't have permission to access this page"
+  - [ ] Button: "Return to Home" → Redirect to index.php
+  - [ ] Suggest login if not authenticated
+
+---
+
+## Phase 2.5: Authentication UI & Gated Content Logic
+
+### Gated Content Styling
+- [ ] Add CSS to `assets/css/styles.css` for gated content:
+  - [ ] `.gated-content` - Container for blurred shop details
+  - [ ] `.blur-filter` - CSS blur effect: `filter: blur(8px); pointer-events: none;`
+  - [ ] `.login-overlay` - Semi-transparent overlay with login CTA
+  - [ ] `.lock-icon` - Lock emoji or SVG icon styling
+  - [ ] Responsive design for mobile (overlay covers full section)
+
+### Gated Content JavaScript
+- [ ] Create `assets/js/auth.js` with:
+  - [ ] `checkAuthState()` - Check if user is logged in via session
+  - [ ] `showLoginModal()` - Display login prompt modal when guest clicks gated content
+  - [ ] `redirectToLogin(returnUrl)` - Save return URL and redirect to login page
+  - [ ] Event listeners for "Login to Rent" buttons
+  - [ ] Form validation for login and registration forms
+  - [ ] Password strength checker (real-time feedback)
+  - [ ] Toggle password visibility (eye icon)
+
+### Product Detail Page - Gated Content Implementation
+- [ ] Update `public/product.php` to implement gated content:
+  - [ ] Include `auth_helper.php` at top
+  - [ ] Check if user is logged in: `$is_logged_in = isLoggedIn();`
+  - [ ] Fetch equipment AND shop details from database
+  - [ ] Equipment details section (ALWAYS visible):
+    - [ ] Equipment name, brand, model, description
+    - [ ] Equipment images and specifications
+    - [ ] Daily/weekly/monthly pricing
+    - [ ] Availability status
+    - [ ] Condition badge
+  - [ ] Shop details section (GATED for guests):
+    - [ ] If logged in: Show full shop name, address, phone, WhatsApp, "Rent Now" button
+    - [ ] If NOT logged in:
+      - [ ] Apply blur filter to shop name, address, phone
+      - [ ] Show placeholder text (████████)
+      - [ ] Display overlay with lock icon and "Login to View Shop Details"
+      - [ ] Replace "Rent Now" with "Login to Rent" button
+      - [ ] Link to login page with return URL: `/public/login.php?return=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>`
+
+### Search Results Page - Gated Content
+- [ ] Update `public/results.php` or `public/search.php`:
+  - [ ] Include `auth_helper.php`
+  - [ ] Pass `$is_logged_in` flag to each equipment card
+  - [ ] In equipment card template:
+    - [ ] Equipment info: Always visible
+    - [ ] Shop name: Show if logged in, else show "Login to View Shop"
+    - [ ] "Rent Now" button: Show if logged in, else show "Login to Rent"
+    - [ ] Apply blur effect to shop section if not logged in
+
+---
+
+## Phase 2: Shared Components & Layout (Continued)
+
+### Authentication Middleware & Helper Functions
+- [ ] Create `includes/auth_helper.php` with authentication middleware:
+  - [ ] `isLoggedIn()` - Check if user has active session
+  - [ ] `getUserRole()` - Return current user role (customer, vendor, admin)
+  - [ ] `getUserStatus()` - Return current user status (active, pending, suspended, rejected)
+  - [ ] `isCustomer()`, `isVendor()`, `isAdmin()` - Role check helpers
+  - [ ] `requireLogin($returnUrl)` - Redirect to login if not authenticated
+  - [ ] `requireRole($role)` - Redirect if user doesn't have required role
+  - [ ] `requireAdmin()` - Protect admin-only routes
+  - [ ] `requireActiveVendor()` - Protect vendor routes (must be active)
+  - [ ] `getCurrentUserId()` - Get logged-in user ID
+  - [ ] `getCurrentUserName()` - Get logged-in user's full name
+  - [ ] `logout()` - Destroy session and redirect to home
+  - [ ] `canAccess($resourceType, $resourceOwnerId)` - Check resource ownership
 
 ### HTML Layout & Header
 - [ ] Create `includes/header.php` with:
@@ -59,6 +242,11 @@
   - [ ] LankanLens logo/brand link to home
   - [ ] Search shortcut link
   - [ ] "Browse by Category" dropdown (camera bodies, lenses, lighting, accessories)
+  - [ ] **Authentication Menu (Conditional):**
+    - [ ] If NOT logged in: "Login" and "Sign Up" buttons
+    - [ ] If logged in as Customer: "Welcome, [Name]" with dropdown (Profile, Booking History, Logout)
+    - [ ] If logged in as Vendor: "Vendor Dashboard" link + user dropdown
+    - [ ] If logged in as Admin: "Admin Panel" link + user dropdown
   - [ ] Mobile hamburger menu (optional for Phase 2, can be Phase 3)
   - [ ] Tailwind classes for responsive design (flex, justify-between, items-center)
   - [ ] Styling: bg-white, border-bottom, shadow-sm
@@ -290,7 +478,174 @@
 
 ---
 
-## Phase 8: Additional Pages & Features
+## Phase 8: Vendor Dashboard & Listing Management
+
+### Vendor Dashboard Page
+- [ ] Create `vendor/dashboard.php` with:
+  - [ ] Protect route: `require_once '../includes/auth_helper.php'; requireActiveVendor();`
+  - [ ] Check vendor status: If 'pending', redirect to vendor-pending.php
+  - [ ] Display welcome message: "Welcome, [Vendor Name]"
+  - [ ] Quick stats cards:
+    - [ ] Total Listings (count equipment where shop_id = vendor's shop)
+    - [ ] Total Views (sum of view_count)
+    - [ ] Total Inquiries (count booking_requests)
+    - [ ] Active Listings vs. Unavailable
+  - [ ] Action buttons:
+    - [ ] "Add New Equipment" → `/vendor/add-equipment.php`
+    - [ ] "Manage Listings" → `/vendor/my-listings.php`
+    - [ ] "View Inquiries" → `/vendor/inquiries.php`
+    - [ ] "Analytics" → `/vendor/analytics.php`
+  - [ ] Recent inquiries table (last 5 booking requests)
+  - [ ] Sidebar navigation for vendor sections
+
+### Add Equipment Page
+- [ ] Create `vendor/add-equipment.php` with:
+  - [ ] Protect route: `requireActiveVendor()`
+  - [ ] Equipment creation form:
+    - [ ] Category (dropdown from equipment_categories)
+    - [ ] Equipment Name (input, required)
+    - [ ] Brand (dropdown or text, required)
+    - [ ] Model Number (input, optional)
+    - [ ] Equipment Type (input, e.g., "Full-Frame Mirrorless")
+    - [ ] Description (textarea, max 1000 chars)
+    - [ ] Specifications (JSON or structured fields)
+    - [ ] Condition (dropdown: Excellent, Good, Fair)
+    - [ ] Images (file upload, accept jpg/png, max 5 images, 5MB each)
+    - [ ] Daily Rate LKR (input number, required)
+    - [ ] Weekly Rate LKR (input number, optional)
+    - [ ] Monthly Rate LKR (input number, optional)
+    - [ ] Available Quantity (input number, min 0)
+    - [ ] Deposit Required LKR (input number)
+    - [ ] Delivery Available (checkbox)
+  - [ ] Submit button: "Add Equipment"
+  - [ ] Cancel button: Return to dashboard
+
+### Add Equipment Backend
+- [ ] Handle form submission in `vendor/add-equipment.php`:
+  - [ ] Validate all required fields
+  - [ ] Process image uploads:
+    - [ ] Validate file types (jpg, png, webp only)
+    - [ ] Validate file size (max 5MB per image)
+    - [ ] Generate unique filenames: `uniqid() . '_' . $filename`
+    - [ ] Move files to `/uploads/equipment/` directory
+    - [ ] Store image URLs in database
+  - [ ] Get vendor's shop_id from session or users table
+  - [ ] Insert into `equipment` table with shop_id
+  - [ ] Insert into `inventory` table with pricing and quantity
+  - [ ] Redirect to dashboard with success toast: "Equipment added successfully!"
+  - [ ] Handle errors: Display validation errors
+
+### Manage Listings Page
+- [ ] Create `vendor/my-listings.php`:
+  - [ ] Protect route: `requireActiveVendor()`
+  - [ ] Query all equipment where shop_id = vendor's shop
+  - [ ] Display listings table with columns:
+    - [ ] Image thumbnail
+    - [ ] Equipment name
+    - [ ] Brand & model
+    - [ ] Daily rate
+    - [ ] Available quantity
+    - [ ] Status (Available, Unavailable)
+    - [ ] Actions: Edit, Delete, Mark Unavailable
+  - [ ] Edit button → `/vendor/edit-equipment.php?id=[equipment_id]`
+  - [ ] Delete button → Confirm modal → DELETE query
+  - [ ] Toggle availability → UPDATE inventory SET available_quantity = 0
+
+### Edit Equipment Page
+- [ ] Create `vendor/edit-equipment.php`:
+  - [ ] Protect route: `requireActiveVendor()`
+  - [ ] Verify ownership: Check if equipment.shop_id matches vendor's shop
+  - [ ] Pre-populate form with existing equipment data
+  - [ ] Allow updates to all fields (name, description, pricing, images, quantity)
+  - [ ] Handle image replacement (delete old, upload new)
+  - [ ] Submit → UPDATE equipment and inventory tables
+  - [ ] Redirect to my-listings with success message
+
+---
+
+## Phase 9: Admin Panel (God Mode)
+
+### Admin Dashboard
+- [ ] Create `admin/dashboard.php`:
+  - [ ] Protect route: `requireAdmin()`
+  - [ ] Display admin control panel with sections:
+    - [ ] **System Overview:**
+      - [ ] Total users (count by role: customers, vendors, admins)
+      - [ ] Pending vendor approvals (count where role='vendor' AND status='pending')
+      - [ ] Total equipment listings
+      - [ ] Total shops
+      - [ ] Total booking requests
+    - [ ] **Quick Actions:**
+      - [ ] "Approve Vendors" → `/admin/vendor-approvals.php`
+      - [ ] "Manage Users" → `/admin/users.php`
+      - [ ] "Moderate Listings" → `/admin/listings.php`
+      - [ ] "View System Logs" → `/admin/logs.php`
+  - [ ] Recent activity feed (last 10 admin actions from admin_logs)
+  - [ ] System health indicators (database status, error count)
+
+### Vendor Approval Queue
+- [ ] Create `admin/vendor-approvals.php`:
+  - [ ] Protect route: `requireAdmin()`
+  - [ ] Query pending vendors: `SELECT * FROM users WHERE role='vendor' AND status='pending'`
+  - [ ] Display table with columns:
+    - [ ] Full Name
+    - [ ] Email
+    - [ ] Shop Name
+    - [ ] Registration Date
+    - [ ] Actions: Approve, Reject, View Details
+  - [ ] Approve button → Modal: "Approve [Vendor Name]?"
+  - [ ] On approve:
+    - [ ] UPDATE users SET status='active', approved_by=[admin_user_id] WHERE user_id=[vendor_id]
+    - [ ] Log action in admin_logs table
+    - [ ] Send email notification to vendor (optional)
+    - [ ] Show success toast: "Vendor approved!"
+  - [ ] Reject button → Modal: "Reject [Vendor Name]? (Optional: Reason)"
+  - [ ] On reject:
+    - [ ] UPDATE users SET status='rejected' WHERE user_id=[vendor_id]
+    - [ ] Log action in admin_logs
+    - [ ] Send rejection email with reason
+    - [ ] Show toast: "Vendor rejected"
+
+### User Management Page
+- [ ] Create `admin/users.php`:
+  - [ ] Protect route: `requireAdmin()`
+  - [ ] Display all users with filters:
+    - [ ] Filter by role (All, Customer, Vendor, Admin)
+    - [ ] Filter by status (All, Active, Pending, Suspended, Rejected)
+    - [ ] Search by name or email
+  - [ ] Users table with columns:
+    - [ ] User ID, Full Name, Email, Role, Status, Last Login, Actions
+  - [ ] Actions per user:
+    - [ ] Edit (change role, status, details)
+    - [ ] Suspend (change status to 'suspended')
+    - [ ] Delete (with confirmation modal)
+    - [ ] View Activity (show user's booking history, searches)
+  - [ ] Pagination (20 users per page)
+
+### Equipment Moderation Page
+- [ ] Create `admin/listings.php`:
+  - [ ] Protect route: `requireAdmin()`
+  - [ ] Display all equipment listings across all vendors
+  - [ ] Table with columns:
+    - [ ] Equipment ID, Name, Brand, Shop Name, Status, Actions
+  - [ ] Actions:
+    - [ ] Edit (admin can edit any listing)
+    - [ ] Delete (remove inappropriate or spam listings)
+    - [ ] Feature (mark as featured/promoted)
+  - [ ] Filter by shop, category, status
+  - [ ] Search by equipment name or brand
+
+### Admin Logs Page
+- [ ] Create `admin/logs.php`:
+  - [ ] Protect route: `requireAdmin()`
+  - [ ] Display recent admin actions from `admin_logs` table
+  - [ ] Show: Admin name, Action type, Target (user/equipment), Timestamp
+  - [ ] Filter by action type (Approve Vendor, Reject Vendor, Delete Listing, etc.)
+  - [ ] Export logs as CSV (optional)
+
+---
+
+## Phase 8: Additional Pages & Features (Continued)
 
 ### About Page
 - [ ] Create `public/about.php` with:
@@ -325,6 +680,27 @@
   - [ ] Realistic phone numbers (+94 format)
   - [ ] Realistic emails and websites
   - [ ] Sample ratings (3.5-5.0 stars)
+
+### Sample User Data
+- [ ] Create `database/seeds/users-seed.sql` with:
+  - [ ] INSERT admin user:
+    - [ ] Email: admin@lankanlens.lk
+    - [ ] Password: 'password' (hashed with bcrypt) - CHANGE IN PRODUCTION
+    - [ ] Role: 'admin', Status: 'active'
+  - [ ] INSERT sample customer user:
+    - [ ] Email: customer@example.com
+    - [ ] Password: 'password' (hashed)
+    - [ ] Role: 'customer', Status: 'active'
+  - [ ] INSERT sample pending vendor:
+    - [ ] Email: vendor@example.com
+    - [ ] Password: 'password' (hashed)
+    - [ ] Role: 'vendor', Status: 'pending'
+    - [ ] Shop Name: "Epic Camera Rentals"
+  - [ ] INSERT sample active vendor:
+    - [ ] Email: active.vendor@example.com
+    - [ ] Password: 'password' (hashed)
+    - [ ] Role: 'vendor', Status: 'active'
+    - [ ] Shop Name: "Pro Lens Rental"
 
 ### Sample Equipment Categories
 - [ ] Create `database/seeds/categories-seed.sql` with:
@@ -373,13 +749,45 @@
   - [ ] Empty state displays when no results
   - [ ] All navigation links work
   
+- [ ] Test Authentication Flow:
+  - [ ] Guest user can browse equipment but shop details are blurred
+  - [ ] Clicking "Login to Rent" redirects to login page
+  - [ ] Login with valid customer credentials redirects back to product page
+  - [ ] Shop details are now visible (no blur)
+  - [ ] "Rent Now" button is active
+  - [ ] Register as customer grants immediate access
+  - [ ] Register as vendor shows "Pending Approval" page
+  - [ ] Vendor cannot access vendor dashboard until approved
+  - [ ] Admin can approve vendor from admin panel
+  - [ ] Approved vendor can access vendor dashboard
+  - [ ] Logout destroys session and redirects to home
+  
 - [ ] Test Booking Journey:
-  - [ ] Click "Check Availability" on a gear card
+  - [ ] Click "Check Availability" on a gear card (must be logged in)
   - [ ] Modal opens with correct equipment info
   - [ ] Name validation works
   - [ ] Duration dropdown populates and updates price
   - [ ] "Send Request" button generates WhatsApp link
   - [ ] WhatsApp opens with correct pre-filled message
+
+- [ ] Test Vendor Dashboard:
+  - [ ] Vendor can access dashboard only if status='active'
+  - [ ] Vendor can add new equipment listing
+  - [ ] Image upload works (max 5 images, 5MB each)
+  - [ ] Equipment appears in vendor's "My Listings"
+  - [ ] Vendor can edit their own equipment
+  - [ ] Vendor can delete their own equipment
+  - [ ] Vendor cannot access admin panel
+  
+- [ ] Test Admin Panel:
+  - [ ] Admin can access admin dashboard
+  - [ ] Admin sees pending vendor approvals
+  - [ ] Admin can approve vendor (status changes to 'active')
+  - [ ] Admin can reject vendor (status changes to 'rejected')
+  - [ ] Admin can view all users and edit them
+  - [ ] Admin can suspend or delete users
+  - [ ] Admin can view and moderate all equipment listings
+  - [ ] Admin logs are recorded for all actions
 
 ### Bug Fixes & Edge Cases
 - [ ] Fix any JavaScript console errors
@@ -426,6 +834,17 @@
 - [ ] Verify .env file is not committed to git
 - [ ] Test for XSS vulnerabilities
 - [ ] Test for SQL injection vulnerabilities
+- [ ] **Authentication Security:**
+  - [ ] Verify passwords are hashed with bcrypt (PASSWORD_BCRYPT)
+  - [ ] Check that password_hash and password_verify are used correctly
+  - [ ] Verify session data is not exposed in URLs
+  - [ ] Check that remember_token is generated securely (random_bytes)
+  - [ ] Verify failed login attempts are tracked and accounts lock after 5 attempts
+  - [ ] Test that session expires after 2 hours of inactivity
+  - [ ] Verify logout clears all session data and cookies
+  - [ ] Check that admin routes are protected with requireAdmin()
+  - [ ] Verify vendor routes check both role AND status
+  - [ ] Test that gated content cannot be bypassed via direct URL access
 
 ### Error Logging & Monitoring
 - [ ] Verify errors are logged to `/logs/errors.log`
