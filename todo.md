@@ -102,154 +102,154 @@
   - [x] Accept return URL parameter: `?return=/public/product.php?id=5`
 
 ### User Login Backend
-- [ ] Create login handler in `public/login.php` (POST section):
-  - [ ] Validate email and password (not empty)
-  - [ ] Query `users` table by email
-  - [ ] If email not found: Return generic error "Invalid email or password"
-  - [ ] Check failed login attempts:
-    - [ ] If `failed_login_attempts >= 5` and within 15 minutes: Lock account temporarily
-    - [ ] Display message: "Account locked. Try again in X minutes."
-  - [ ] Verify password using `password_verify($password, $password_hash)`
-  - [ ] If password incorrect:
-    - [ ] Increment `failed_login_attempts` in database
-    - [ ] Update `last_failed_login` timestamp
-    - [ ] Return error "Invalid email or password"
-  - [ ] If password correct:
-    - [ ] Check account status:
-      - [ ] If 'suspended': Error "Your account has been suspended. Contact admin."
-      - [ ] If 'rejected': Error "Your vendor application was not approved."
-      - [ ] If 'pending' and role='vendor': Redirect to `vendor-pending.php`
-      - [ ] If 'active': Proceed with login
-    - [ ] Reset `failed_login_attempts` to 0
-    - [ ] Update `last_login_at` timestamp
-    - [ ] Create session with user data
-    - [ ] If "Remember Me" checked:
-      - [ ] Generate random token: `bin2hex(random_bytes(32))`
-      - [ ] Store token in database `remember_token` field
-      - [ ] Set cookie with 30-day expiration
-    - [ ] Redirect based on role:
-      - [ ] Admin → `/admin/dashboard.php`
-      - [ ] Vendor (active) → `/vendor/dashboard.php`
-      - [ ] Customer → Return URL or `/public/index.php`
+- [x] Create login handler in `public/login.php` (POST section):
+  - [x] Validate email and password (not empty)
+  - [x] Query `users` table by email
+  - [x] If email not found: Return generic error "Invalid email or password"
+  - [x] Check failed login attempts:
+    - [x] If `failed_login_attempts >= 5` and within 15 minutes: Lock account temporarily
+    - [x] Display message: "Account locked. Try again in X minutes."
+  - [x] Verify password using `password_verify($password, $password_hash)`
+  - [x] If password incorrect:
+    - [x] Increment `failed_login_attempts` in database
+    - [x] Update `last_failed_login` timestamp
+    - [x] Return error "Invalid email or password"
+  - [x] If password correct:
+    - [x] Check account status:
+      - [x] If 'suspended': Error "Your account has been suspended. Contact admin."
+      - [x] If 'rejected': Error "Your vendor application was not approved."
+      - [x] If 'pending' and role='vendor': Redirect to `vendor-pending.php`
+      - [x] If 'active': Proceed with login
+    - [x] Reset `failed_login_attempts` to 0
+    - [x] Update `last_login_at` timestamp
+    - [x] Create session with user data
+    - [x] If "Remember Me" checked:
+      - [x] Generate random token: `bin2hex(random_bytes(32))`
+      - [x] Store token in database `remember_token` field
+      - [x] Set cookie with 30-day expiration
+    - [x] Redirect based on role:
+      - [x] Admin → `/admin/dashboard.php`
+      - [x] Vendor (active) → `/vendor/dashboard.php`
+      - [x] Customer → Return URL or `/public/index.php`
 
 ### Logout Handler
-- [ ] Create `public/logout.php`:
-  - [ ] Destroy session with `session_destroy()`
-  - [ ] Clear remember_token cookie
-  - [ ] Clear remember_token in database
-  - [ ] Redirect to home page with success message
+- [x] Create `public/logout.php`:
+  - [x] Destroy session with `session_destroy()`
+  - [x] Clear remember_token cookie
+  - [x] Clear remember_token in database
+  - [x] Redirect to home page with success message
 
 ### Vendor Pending Approval Page
-- [ ] Create `public/vendor-pending.php`:
-  - [ ] Check if user is logged in and role='vendor' and status='pending'
-  - [ ] Display pending approval message:
-    - [ ] Icon: Hourglass or pending status icon
-    - [ ] Header: "Your Vendor Account is Pending Approval"
-    - [ ] Message: "Thank you for registering! Our admin team will review your application within 1-2 business days."
-    - [ ] Email notification: "You'll receive an email at [email] once approved"
-    - [ ] Option to browse equipment as customer while waiting
-  - [ ] Button: "Browse Equipment" → Redirect to home page
-  - [ ] Logout link
+- [x] Create `public/vendor-pending.php`:
+  - [x] Check if user is logged in and role='vendor' and status='pending'
+  - [x] Display pending approval message:
+    - [x] Icon: Hourglass or pending status icon
+    - [x] Header: "Your Vendor Account is Pending Approval"
+    - [x] Message: "Thank you for registering! Our admin team will review your application within 1-2 business days."
+    - [x] Email notification: "You'll receive an email at [email] once approved"
+    - [x] Option to browse equipment as customer while waiting
+  - [x] Button: "Browse Equipment" → Redirect to home page
+  - [x] Logout link
 
 ### Unauthorized Access Page
-- [ ] Create `public/unauthorized.php`:
-  - [ ] Display "Access Denied" message
-  - [ ] Explain: "You don't have permission to access this page"
-  - [ ] Button: "Return to Home" → Redirect to index.php
-  - [ ] Suggest login if not authenticated
+- [x] Create `public/unauthorized.php`:
+  - [x] Display "Access Denied" message
+  - [x] Explain: "You don't have permission to access this page"
+  - [x] Button: "Return to Home" → Redirect to index.php
+  - [x] Suggest login if not authenticated
 
 ---
 
 ## Phase 2.5: Authentication UI & Gated Content Logic
 
 ### Gated Content Styling
-- [ ] Add CSS to `assets/css/styles.css` for gated content:
-  - [ ] `.gated-content` - Container for blurred shop details
-  - [ ] `.blur-filter` - CSS blur effect: `filter: blur(8px); pointer-events: none;`
-  - [ ] `.login-overlay` - Semi-transparent overlay with login CTA
-  - [ ] `.lock-icon` - Lock emoji or SVG icon styling
-  - [ ] Responsive design for mobile (overlay covers full section)
+- [x] Add CSS to `assets/css/styles.css` for gated content:
+  - [x] `.gated-content` - Container for blurred shop details
+  - [x] `.blur-filter` - CSS blur effect: `filter: blur(8px); pointer-events: none;`
+  - [x] `.login-overlay` - Semi-transparent overlay with login CTA
+  - [x] `.lock-icon` - Lock emoji or SVG icon styling
+  - [x] Responsive design for mobile (overlay covers full section)
 
 ### Gated Content JavaScript
-- [ ] Create `assets/js/auth.js` with:
-  - [ ] `checkAuthState()` - Check if user is logged in via session
-  - [ ] `showLoginModal()` - Display login prompt modal when guest clicks gated content
-  - [ ] `redirectToLogin(returnUrl)` - Save return URL and redirect to login page
-  - [ ] Event listeners for "Login to Rent" buttons
-  - [ ] Form validation for login and registration forms
-  - [ ] Password strength checker (real-time feedback)
-  - [ ] Toggle password visibility (eye icon)
+- [x] Create `assets/js/auth.js` with:
+  - [x] `checkAuthState()` - Check if user is logged in via session
+  - [x] `showLoginModal()` - Display login prompt modal when guest clicks gated content
+  - [x] `redirectToLogin(returnUrl)` - Save return URL and redirect to login page
+  - [x] Event listeners for "Login to Rent" buttons
+  - [x] Form validation for login and registration forms
+  - [x] Password strength checker (real-time feedback)
+  - [x] Toggle password visibility (eye icon)
 
 ### Product Detail Page - Gated Content Implementation
-- [ ] Update `public/product.php` to implement gated content:
-  - [ ] Include `auth_helper.php` at top
-  - [ ] Check if user is logged in: `$is_logged_in = isLoggedIn();`
-  - [ ] Fetch equipment AND shop details from database
-  - [ ] Equipment details section (ALWAYS visible):
-    - [ ] Equipment name, brand, model, description
-    - [ ] Equipment images and specifications
-    - [ ] Daily/weekly/monthly pricing
-    - [ ] Availability status
-    - [ ] Condition badge
-  - [ ] Shop details section (GATED for guests):
-    - [ ] If logged in: Show full shop name, address, phone, WhatsApp, "Rent Now" button
-    - [ ] If NOT logged in:
-      - [ ] Apply blur filter to shop name, address, phone
-      - [ ] Show placeholder text (████████)
-      - [ ] Display overlay with lock icon and "Login to View Shop Details"
-      - [ ] Replace "Rent Now" with "Login to Rent" button
-      - [ ] Link to login page with return URL: `/public/login.php?return=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>`
+- [x] Update `public/product.php` to implement gated content:
+  - [x] Include `auth_helper.php` at top
+  - [x] Check if user is logged in: `$is_logged_in = isLoggedIn();`
+  - [x] Fetch equipment AND shop details from database
+  - [x] Equipment details section (ALWAYS visible):
+    - [x] Equipment name, brand, model, description
+    - [x] Equipment images and specifications
+    - [x] Daily/weekly/monthly pricing
+    - [x] Availability status
+    - [x] Condition badge
+  - [x] Shop details section (GATED for guests):
+    - [x] If logged in: Show full shop name, address, phone, WhatsApp, "Rent Now" button
+    - [x] If NOT logged in:
+      - [x] Apply blur filter to shop name, address, phone
+      - [x] Show placeholder text (████████)
+      - [x] Display overlay with lock icon and "Login to View Shop Details"
+      - [x] Replace "Rent Now" with "Login to Rent" button
+      - [x] Link to login page with return URL: `/public/login.php?return=<?php echo urlencode($_SERVER['REQUEST_URI']); ?>`
 
 ### Search Results Page - Gated Content
-- [ ] Update `public/results.php` or `public/search.php`:
-  - [ ] Include `auth_helper.php`
-  - [ ] Pass `$is_logged_in` flag to each equipment card
-  - [ ] In equipment card template:
-    - [ ] Equipment info: Always visible
-    - [ ] Shop name: Show if logged in, else show "Login to View Shop"
-    - [ ] "Rent Now" button: Show if logged in, else show "Login to Rent"
-    - [ ] Apply blur effect to shop section if not logged in
+- [x] Update `public/results.php` or `public/search.php`:
+  - [x] Include `auth_helper.php`
+  - [x] Pass `$is_logged_in` flag to each equipment card
+  - [x] In equipment card template:
+    - [x] Equipment info: Always visible
+    - [x] Shop name: Show if logged in, else show "Login to View Shop"
+    - [x] "Rent Now" button: Show if logged in, else show "Login to Rent"
+    - [x] Apply blur effect to shop section if not logged in
 
 ---
 
 ## Phase 2: Shared Components & Layout (Continued)
 
 ### Authentication Middleware & Helper Functions
-- [ ] Create `includes/auth_helper.php` with authentication middleware:
-  - [ ] `isLoggedIn()` - Check if user has active session
-  - [ ] `getUserRole()` - Return current user role (customer, vendor, admin)
-  - [ ] `getUserStatus()` - Return current user status (active, pending, suspended, rejected)
-  - [ ] `isCustomer()`, `isVendor()`, `isAdmin()` - Role check helpers
-  - [ ] `requireLogin($returnUrl)` - Redirect to login if not authenticated
-  - [ ] `requireRole($role)` - Redirect if user doesn't have required role
-  - [ ] `requireAdmin()` - Protect admin-only routes
-  - [ ] `requireActiveVendor()` - Protect vendor routes (must be active)
-  - [ ] `getCurrentUserId()` - Get logged-in user ID
-  - [ ] `getCurrentUserName()` - Get logged-in user's full name
-  - [ ] `logout()` - Destroy session and redirect to home
-  - [ ] `canAccess($resourceType, $resourceOwnerId)` - Check resource ownership
+- [x] Create `includes/auth_helper.php` with authentication middleware:
+  - [x] `isLoggedIn()` - Check if user has active session
+  - [x] `getUserRole()` - Return current user role (customer, vendor, admin)
+  - [x] `getUserStatus()` - Return current user status (active, pending, suspended, rejected)
+  - [x] `isCustomer()`, `isVendor()`, `isAdmin()` - Role check helpers
+  - [x] `requireLogin($returnUrl)` - Redirect to login if not authenticated
+  - [x] `requireRole($role)` - Redirect if user doesn't have required role
+  - [x] `requireAdmin()` - Protect admin-only routes
+  - [x] `requireActiveVendor()` - Protect vendor routes (must be active)
+  - [x] `getCurrentUserId()` - Get logged-in user ID
+  - [x] `getCurrentUserName()` - Get logged-in user's full name
+  - [x] `logout()` - Destroy session and redirect to home
+  - [x] `canAccess($resourceType, $resourceOwnerId)` - Check resource ownership
 
 ### HTML Layout & Header
-- [ ] Create `includes/header.php` with:
-  - [ ] HTML5 doctype and meta tags (charset, viewport)
-  - [ ] Tailwind CSS CDN link: `<script src="https://cdn.tailwindcss.com"></script>`
-  - [ ] Custom CSS link: `<link rel="stylesheet" href="/assets/css/styles.css">`
-  - [ ] Logo and site title
-  - [ ] Open `<body>` tag (closing in footer.php)
+- [x] Create `includes/header.php` with:
+  - [x] HTML5 doctype and meta tags (charset, viewport)
+  - [x] Tailwind CSS CDN link: `<script src="https://cdn.tailwindcss.com"></script>`
+  - [x] Custom CSS link: `<link rel="stylesheet" href="/assets/css/styles.css">`
+  - [x] Logo and site title
+  - [x] Open `<body>` tag (closing in footer.php)
 
 ### Navigation Bar
-- [ ] Create `includes/navbar.php` with:
-  - [ ] LankanLens logo/brand link to home
-  - [ ] Search shortcut link
-  - [ ] "Browse by Category" dropdown (camera bodies, lenses, lighting, accessories)
-  - [ ] **Authentication Menu (Conditional):**
-    - [ ] If NOT logged in: "Login" and "Sign Up" buttons
-    - [ ] If logged in as Customer: "Welcome, [Name]" with dropdown (Profile, Booking History, Logout)
-    - [ ] If logged in as Vendor: "Vendor Dashboard" link + user dropdown
-    - [ ] If logged in as Admin: "Admin Panel" link + user dropdown
-  - [ ] Mobile hamburger menu (optional for Phase 2, can be Phase 3)
-  - [ ] Tailwind classes for responsive design (flex, justify-between, items-center)
-  - [ ] Styling: bg-white, border-bottom, shadow-sm
+- [x] Create `includes/navbar.php` with:
+  - [x] LankanLens logo/brand link to home
+  - [x] Search shortcut link
+  - [x] "Browse by Category" dropdown (camera bodies, lenses, lighting, accessories)
+  - [x] **Authentication Menu (Conditional):**
+    - [x] If NOT logged in: "Login" and "Sign Up" buttons
+    - [x] If logged in as Customer: "Welcome, [Name]" with dropdown (Profile, Booking History, Logout)
+    - [x] If logged in as Vendor: "Vendor Dashboard" link + user dropdown
+    - [x] If logged in as Admin: "Admin Panel" link + user dropdown
+  - [x] Mobile hamburger menu (optional for Phase 2, can be Phase 3)
+  - [x] Tailwind classes for responsive design (flex, justify-between, items-center)
+  - [x] Styling: bg-white, border-bottom, shadow-sm
 
 ### Footer
 - [ ] Create `includes/footer.php` with:

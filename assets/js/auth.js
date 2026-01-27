@@ -1,7 +1,145 @@
 /**
  * Authentication JavaScript Module
- * Handles client-side validation for login and registration forms
+ * Handles client-side validation, authentication state management, and gated content
  */
+
+/**
+ * Authentication State Manager
+ * Handles checking login status and managing gated content
+ */
+class AuthManager {
+    /**
+     * Check if user is currently authenticated
+     * Checks session state via PHP endpoint
+     */
+    static async checkAuthState() {
+        try {
+            const response = await fetch('/api/check-auth.php', {
+                method: 'GET',
+                credentials: 'include'
+            });
+            const data = await response.json();
+            return data.authenticated === true;
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Show login modal for gated content
+     */
+    static showLoginModal() {
+        const modal = document.getElementById('loginModal') || this.createLoginModal();
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    /**
+     * Hide login modal
+     */
+    static hideLoginModal() {
+        const modal = document.getElementById('loginModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+    }
+
+    /**
+     * Create login modal dynamically if not present in DOM
+     */
+    static createLoginModal() {
+        const modal = document.createElement('div');
+        modal.id = 'loginModal';
+        modal.className = 'hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        modal.innerHTML = `
+            <div class="bg-white rounded-lg shadow-xl p-8 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Login Required</h2>
+                    <button class="text-gray-500 hover:text-gray-700" onclick="AuthManager.hideLoginModal()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+                <p class="text-gray-600 mb-6">You need to be logged in to access this content.</p>
+                <div class="flex gap-3">
+                    <button onclick="AuthManager.redirectToLogin(window.location.pathname)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">
+                        Login
+                    </button>
+                    <button onclick="window.location.href='/public/register.php'" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-900 font-semibold py-2 px-4 rounded-lg transition">
+                        Register
+                    </button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        return modal;
+    }
+
+    /**
+     * Redirect to login page with return URL
+     */
+    static redirectToLogin(returnUrl) {
+        if (returnUrl) {
+            const encoded = btoa(returnUrl); // Base64 encode for safety
+            window.location.href = `/public/login.php?return=${encoded}`;
+        } else {
+            window.location.href = '/public/login.php';
+        }
+    }
+
+    /**
+     * Setup click handlers for "Login to Rent" buttons
+     */
+    static setupGatedContentHandlers() {
+        const gatedButtons = document.querySelectorAll('[data-action="login-to-rent"]');
+        gatedButtons.forEach(button => {
+            button.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const isAuthenticated = await AuthManager.checkAuthState();
+                if (!isAuthenticated) {
+                    const returnUrl = button.dataset.returnUrl || window.location.pathname;
+                    AuthManager.redirectToLogin(returnUrl);
+                } else {
+                    // User is logged in, proceed with rental
+                    if (button.dataset.action === 'login-to-rent') {
+                        // Redirect to rent page or show rental form
+                        const productId = button.dataset.productId;
+                        if (productId) {
+                            window.location.href = `/public/rent.php?product_id=${productId}`;
+                        }
+                    }
+                }
+            });
+        });
+    }
+
+    /**
+     * Setup overlay click handlers for gated content
+     */
+    static setupOverlayHandlers() {
+        const overlays = document.querySelectorAll('.login-overlay');
+        overlays.forEach(overlay => {
+            const button = overlay.querySelector('.login-overlay-button');
+            if (button) {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    AuthManager.redirectToLogin(window.location.pathname);
+                });
+            }
+        });
+    }
+
+    /**
+     * Initialize gated content features on page load
+     */
+    static initialize() {
+        this.setupGatedContentHandlers();
+        this.setupOverlayHandlers();
+    }
+}
 
 class AuthValidator {
     constructor(formId) {
@@ -465,6 +603,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.getElementById('loginForm')) {
         new LoginForm();
     }
+
+    // Initialize gated content handlers
+    AuthManager.initialize();
 });
 
 /**
