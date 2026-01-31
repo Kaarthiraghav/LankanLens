@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * Product Detail Page
  * Displays equipment details with gated shop information for non-authenticated users
@@ -15,7 +16,7 @@ $is_logged_in = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 $product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 
 if (!$product_id) {
-    header('Location: /index.php');
+    header('Location: ' . BASE_URL . 'public/index.php');
     exit;
 }
 
@@ -57,7 +58,7 @@ $equipment = $db->fetchOne($query, [$product_id]);
 
 if (!$equipment) {
     http_response_code(404);
-    header('Location: /index.php');
+    header('Location: ' . BASE_URL . 'public/index.php');
     exit;
 }
 
@@ -78,21 +79,21 @@ $daily_rate_formatted = number_format($equipment['daily_rate_lkr'], 0, '.', ',')
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($equipment['equipment_name']); ?> - LankanLens</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/styles.css">
 </head>
 <body class="bg-gray-50">
     <!-- Navigation Bar -->
     <nav class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <a href="/index.php" class="text-xl font-bold text-blue-600">LankanLens</a>
+                <a href="<?php echo BASE_URL; ?>public/index.php" class="text-xl font-bold text-blue-600">LankanLens</a>
                 <div class="flex gap-4">
                     <?php if ($is_logged_in): ?>
                         <span class="text-gray-700">Welcome, <?php echo htmlspecialchars($_SESSION['full_name']); ?></span>
-                        <a href="/public/logout.php" class="text-blue-600 hover:text-blue-800">Logout</a>
+                        <a href="<?php echo BASE_URL; ?>public/logout.php" class="text-blue-600 hover:text-blue-800">Logout</a>
                     <?php else: ?>
-                        <a href="/public/login.php" class="text-blue-600 hover:text-blue-800">Login</a>
-                        <a href="/public/register.php" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Sign Up</a>
+                        <a href="<?php echo BASE_URL; ?>public/login.php" class="text-blue-600 hover:text-blue-800">Login</a>
+                        <a href="<?php echo BASE_URL; ?>public/register.php" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Sign Up</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -102,7 +103,7 @@ $daily_rate_formatted = number_format($equipment['daily_rate_lkr'], 0, '.', ',')
     <!-- Breadcrumb -->
     <div class="bg-white border-b">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <a href="/index.php" class="text-blue-600 hover:text-blue-800">Home</a>
+            <a href="<?php echo BASE_URL; ?>public/index.php" class="text-blue-600 hover:text-blue-800">Home</a>
             <span class="text-gray-500 mx-2">/</span>
             <span class="text-gray-700"><?php echo htmlspecialchars($equipment['equipment_name']); ?></span>
         </div>
@@ -355,9 +356,9 @@ $daily_rate_formatted = number_format($equipment['daily_rate_lkr'], 0, '.', ',')
                 <div>
                     <h3 class="text-lg font-bold mb-4">Quick Links</h3>
                     <ul class="text-gray-400 space-y-2">
-                        <li><a href="/index.php" class="hover:text-white">Home</a></li>
-                        <li><a href="/public/about.php" class="hover:text-white">About</a></li>
-                        <li><a href="/public/contact.php" class="hover:text-white">Contact</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>public/index.php" class="hover:text-white">Home</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>public/about.php" class="hover:text-white">About</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>public/contact.php" class="hover:text-white">Contact</a></li>
                     </ul>
                 </div>
                 <div>
@@ -375,7 +376,7 @@ $daily_rate_formatted = number_format($equipment['daily_rate_lkr'], 0, '.', ',')
     </footer>
 
     <!-- Authentication Scripts -->
-    <script src="/assets/js/auth.js"></script>
+    <script src="<?php echo BASE_URL; ?>assets/js/auth.js"></script>
     <script>
         // Initialize gated content handlers on page load
         document.addEventListener('DOMContentLoaded', function() {

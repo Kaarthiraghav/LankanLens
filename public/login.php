@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * User Login Page
  * 
@@ -90,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $_SESSION['status'] = $user['status'];
                             $_SESSION['full_name'] = $user['full_name'];
                             
-                            header('Location: /public/vendor-pending.php');
+                            header('Location: ' . BASE_URL . 'public/vendor-pending.php');
                             exit;
                         } elseif ($user['status'] === USER_STATUS['ACTIVE']) {
                             // Account is active - proceed with login
@@ -139,14 +140,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             
                             // Redirect based on role
                             if ($user['role'] === ROLES['ADMIN']) {
-                                header('Location: /admin/dashboard.php');
+                                header('Location: ' . BASE_URL . 'admin/dashboard.php');
                                 exit;
                             } elseif ($user['role'] === ROLES['VENDOR']) {
-                                header('Location: /vendor/dashboard.php');
+                                header('Location: ' . BASE_URL . 'vendor/dashboard.php');
                                 exit;
                             } else {
                                 // Customer - check for return URL
-                                $return_url = $_GET['return'] ?? '/public/index.php';
+                                $return_url = $_GET['return'] ?? (BASE_URL . 'public/index.php');
                                 header('Location: ' . $return_url);
                                 exit;
                             }
@@ -171,8 +172,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - <?php echo APP_NAME; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <script src="/assets/js/auth.js" defer></script>
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/styles.css">
+    <script src="<?php echo BASE_URL; ?>assets/js/auth.js" defer></script>
     <style>
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -191,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h2 class="mt-6 text-2xl font-semibold text-gray-900">Sign in to your account</h2>
                 <p class="mt-2 text-sm text-gray-600">
                     Don't have an account? 
-                    <a href="/public/register.php<?php echo isset($_GET['return']) ? '?return=' . urlencode($_GET['return']) : ''; ?>" class="font-medium text-blue-600 hover:text-blue-500">
+                    <a href="<?php echo BASE_URL; ?>public/register.php<?php echo isset($_GET['return']) ? '?return=' . urlencode($_GET['return']) : ''; ?>" class="font-medium text-blue-600 hover:text-blue-500">
                         Sign Up
                     </a>
                 </p>
@@ -308,7 +309,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <!-- Registration Link -->
                 <div class="text-center text-sm text-gray-600">
                     New to LankanLens? 
-                    <a href="/public/register.php<?php echo isset($_GET['return']) ? '?return=' . urlencode($_GET['return']) : ''; ?>" class="font-medium text-blue-600 hover:text-blue-500">
+                    <a href="<?php echo BASE_URL; ?>public/register.php<?php echo isset($_GET['return']) ? '?return=' . urlencode($_GET['return']) : ''; ?>" class="font-medium text-blue-600 hover:text-blue-500">
                         Create an account
                     </a>
                 </div>

@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/nav.php';
 /**
  * Authentication Helper Functions
  * Provides middleware and helper functions for authentication and authorization
@@ -91,12 +92,12 @@ function requireLogin($returnUrl = null) {
     if (!isLoggedIn()) {
         if ($returnUrl) {
             $encoded = urlencode($returnUrl);
-            header("Location: /public/login.php?return={$encoded}");
+            header("Location: " . BASE_URL . "public/login.php?return={$encoded}");
         } else {
             // Use current URL as return URL
             $current_url = $_SERVER['REQUEST_URI'];
             $encoded = urlencode($current_url);
-            header("Location: /public/login.php?return={$encoded}");
+            header("Location: " . BASE_URL . "public/login.php?return={$encoded}");
         }
         exit;
     }
@@ -112,7 +113,7 @@ function requireRole($role) {
     requireLogin();
     
     if (getUserRole() !== $role) {
-        header("Location: /public/unauthorized.php");
+        header("Location: " . BASE_URL . "public/unauthorized.php");
         exit;
     }
 }
@@ -126,7 +127,7 @@ function requireAdmin() {
     requireLogin();
     
     if (!isAdmin()) {
-        header("Location: /public/unauthorized.php");
+        header("Location: " . BASE_URL . "public/unauthorized.php");
         exit;
     }
 }
@@ -141,19 +142,19 @@ function requireActiveVendor() {
     requireLogin();
     
     if (!isVendor()) {
-        header("Location: /public/unauthorized.php");
+        header("Location: " . BASE_URL . "public/unauthorized.php");
         exit;
     }
     
     if (getUserStatus() === 'pending') {
         // Pending vendor - show pending page
-        header("Location: /public/vendor-pending.php");
+        header("Location: " . BASE_URL . "public/vendor-pending.php");
         exit;
     }
     
     if (getUserStatus() !== 'active') {
         // Suspended, rejected, or other status
-        header("Location: /public/unauthorized.php");
+        header("Location: " . BASE_URL . "public/unauthorized.php");
         exit;
     }
 }
@@ -167,7 +168,7 @@ function requireCustomer() {
     requireLogin();
     
     if (!isCustomer()) {
-        header("Location: /public/unauthorized.php");
+        header("Location: " . BASE_URL . "public/unauthorized.php");
         exit;
     }
 }
@@ -227,7 +228,7 @@ function requireActiveAccount() {
         } elseif ($status === 'rejected') {
             die('Your application has been rejected. Please contact support for more information.');
         } elseif ($status === 'pending') {
-            header("Location: /public/vendor-pending.php");
+            header("Location: " . BASE_URL . "public/vendor-pending.php");
             exit;
         }
     }
@@ -271,7 +272,7 @@ function logout() {
 function redirectToLogout($message = null) {
     logout();
     
-    $redirect = '/public/login.php?logged_out=1';
+    $redirect = BASE_URL . 'public/login.php?logged_out=1';
     if ($message) {
         $redirect .= '&message=' . urlencode($message);
     }

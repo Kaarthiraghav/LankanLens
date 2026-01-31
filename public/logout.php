@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * User Logout Handler
  * 
@@ -45,7 +46,7 @@ try {
     session_destroy();
 
     // Redirect to home page with success message
-    header('Location: /public/index.php?logout=success');
+    header('Location: ' . BASE_URL . 'public/index.php?logout=success');
     exit;
 
 } catch (Exception $e) {
@@ -53,7 +54,7 @@ try {
     
     // Even if there's an error, try to destroy session and redirect
     session_destroy();
-    header('Location: /public/index.php');
+    header('Location: ' . BASE_URL . 'public/index.php');
     exit;
 }
 ?>

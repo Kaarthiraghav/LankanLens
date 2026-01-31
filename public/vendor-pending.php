@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * Vendor Pending Approval Page
  * 
@@ -11,7 +12,7 @@ require_once __DIR__ . '/../includes/auth_helper.php';
 
 // Check if user is logged in and is a pending vendor
 if (!isLoggedIn()) {
-    header('Location: /public/login.php?return=' . urlencode($_SERVER['REQUEST_URI']));
+    header('Location: ' . BASE_URL . 'public/login.php?return=' . urlencode($_SERVER['REQUEST_URI']));
     exit;
 }
 
@@ -24,11 +25,11 @@ $user_email = $_SESSION['email'] ?? '';
 if ($user_role !== ROLES['VENDOR'] || $user_status !== USER_STATUS['PENDING']) {
     // If already active, redirect to vendor dashboard
     if ($user_role === ROLES['VENDOR'] && $user_status === USER_STATUS['ACTIVE']) {
-        header('Location: /vendor/dashboard.php');
+        header('Location: ' . BASE_URL . 'vendor/dashboard.php');
         exit;
     }
     // Otherwise redirect to home
-    header('Location: /public/index.php');
+    header('Location: ' . BASE_URL . 'public/index.php');
     exit;
 }
 ?>
@@ -39,7 +40,7 @@ if ($user_role !== ROLES['VENDOR'] || $user_status !== USER_STATUS['PENDING']) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pending Approval - <?php echo APP_NAME; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/styles.css">
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-50">
     <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -102,14 +103,14 @@ if ($user_role !== ROLES['VENDOR'] || $user_status !== USER_STATUS['PENDING']) {
             <!-- Action Buttons -->
             <div class="space-y-3 pt-4">
                 <a 
-                    href="/public/index.php" 
+                    href="<?php echo BASE_URL; ?>public/index.php" 
                     class="block w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                 >
                     Browse Equipment
                 </a>
                 
                 <a 
-                    href="/public/logout.php" 
+                    href="<?php echo BASE_URL; ?>public/logout.php" 
                     class="block w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition"
                 >
                     Logout
@@ -119,7 +120,7 @@ if ($user_role !== ROLES['VENDOR'] || $user_status !== USER_STATUS['PENDING']) {
             <!-- Contact Support -->
             <div class="border-t pt-4 text-center text-xs text-gray-600">
                 <p>
-                    Have questions? <a href="/public/contact.php" class="font-medium text-blue-600 hover:text-blue-500">Contact our support team</a>
+                    Have questions? <a href="<?php echo BASE_URL; ?>public/contact.php" class="font-medium text-blue-600 hover:text-blue-500">Contact our support team</a>
                 </p>
             </div>
 

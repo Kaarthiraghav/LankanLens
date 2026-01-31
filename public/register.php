@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * User Registration Page
  * 
@@ -123,12 +124,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Redirect based on role
                 if ($role === 'customer') {
                     // Check for return URL
-                    $return_url = $_GET['return'] ?? '/public/index.php';
+                    $return_url = $_GET['return'] ?? (BASE_URL . 'public/index.php');
                     header('Location: ' . $return_url);
                     exit;
                 } else {
                     // Vendor - redirect to pending approval page
-                    header('Location: /public/vendor-pending.php');
+                    header('Location: ' . BASE_URL . 'public/vendor-pending.php');
                     exit;
                 }
             } else {
@@ -149,8 +150,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - <?php echo APP_NAME; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="/assets/css/styles.css">
-    <script src="/assets/js/auth.js" defer></script>
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/styles.css">
+    <script src="<?php echo BASE_URL; ?>assets/js/auth.js" defer></script>
     <style>
         .password-strength {
             height: 4px;
@@ -178,7 +179,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <h2 class="mt-6 text-2xl font-semibold text-gray-900">Create your account</h2>
                 <p class="mt-2 text-sm text-gray-600">
                     Already have an account? 
-                    <a href="/public/login.php<?php echo isset($_GET['return']) ? '?return=' . urlencode($_GET['return']) : ''; ?>" class="font-medium text-blue-600 hover:text-blue-500">
+                    <a href="<?php echo BASE_URL; ?>public/login.php<?php echo isset($_GET['return']) ? '?return=' . urlencode($_GET['return']) : ''; ?>" class="font-medium text-blue-600 hover:text-blue-500">
                         Login
                     </a>
                 </p>
@@ -354,7 +355,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                     >
                     <label for="terms" class="ml-2 block text-sm text-gray-700">
-                        I agree to the <a href="/public/terms.php" target="_blank" class="text-blue-600 hover:text-blue-500">Terms & Conditions</a> and <a href="/public/privacy.php" target="_blank" class="text-blue-600 hover:text-blue-500">Privacy Policy</a> <span class="text-red-500">*</span>
+                        I agree to the <a href="<?php echo BASE_URL; ?>public/terms.php" target="_blank" class="text-blue-600 hover:text-blue-500">Terms & Conditions</a> and <a href="<?php echo BASE_URL; ?>public/privacy.php" target="_blank" class="text-blue-600 hover:text-blue-500">Privacy Policy</a> <span class="text-red-500">*</span>
                     </label>
                 </div>
 

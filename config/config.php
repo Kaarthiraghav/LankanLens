@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * LankanLens Application Configuration
  * Loads environment variables from .env file and defines application constants

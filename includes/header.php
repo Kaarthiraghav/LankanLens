@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/nav.php';
 /**
  * Header Template
  * 
@@ -50,13 +51,13 @@ if (session_status() === PHP_SESSION_NONE) {
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/assets/css/styles.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>assets/css/styles.css">
     
     <!-- Font Awesome Icons (Optional for additional icons) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <!-- Favicon (placeholder) -->
-    <link rel="icon" type="image/x-icon" href="/assets/images/favicon.ico">
+    <link rel="icon" type="image/x-icon" href="<?php echo BASE_URL; ?>assets/images/favicon.ico">
     
     <!-- Preconnect to external resources for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -81,7 +82,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     <!-- Site Title and Tagline -->
                     <div>
                         <h1 class="text-2xl font-bold text-gray-900">
-                            <a href="/public/index.php" class="hover:text-blue-600 transition-colors">LankanLens</a>
+                            <a href="<?php echo BASE_URL; ?>public/index.php" class="hover:text-blue-600 transition-colors">LankanLens</a>
                         </h1>
                         <p class="text-xs text-gray-500">Professional Camera Rental Network</p>
                     </div>

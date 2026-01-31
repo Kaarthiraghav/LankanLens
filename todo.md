@@ -252,120 +252,120 @@
   - [x] Styling: bg-white, border-bottom, shadow-sm
 
 ### Footer
-- [ ] Create `includes/footer.php` with:
-  - [ ] Close `</body>` and `</html>` tags
-  - [ ] Footer content: Copyright, About, Contact, Social links
-  - [ ] Terms & Conditions, Privacy Policy links
-  - [ ] LKR currency note
-  - [ ] Tailwind bg-gray-800, text-white styling
+- [x] Create `includes/footer.php` with:
+  - [x] Close `</body>` and `</html>` tags
+  - [x] Footer content: Copyright, About, Contact, Social links
+  - [x] Terms & Conditions, Privacy Policy links
+  - [x] LKR currency note
+  - [x] Tailwind bg-gray-800, text-white styling
 
 ### Error Handler
-- [ ] Create `includes/error-handler.php` to:
-  - [ ] Display user-friendly error messages
-  - [ ] Log errors to `/logs/errors.log`
-  - [ ] Handle PDO exceptions gracefully
-  - [ ] Display "404 Not Found" or "Something went wrong" pages
+- [x] Create `includes/error-handler.php` to:
+  - [x] Display user-friendly error messages
+  - [x] Log errors to `/logs/errors.log`
+  - [x] Handle PDO exceptions gracefully
+  - [x] Display "404 Not Found" or "Something went wrong" pages
 
 ### Custom CSS & Animations
-- [ ] Create `assets/css/styles.css` with:
-  - [ ] CSS variables: `--color-primary`, `--color-success`, `--color-danger`
-  - [ ] Keyframe animations: `@keyframes spin`, `fadeIn`, `shake`, `slideUp`
-  - [ ] Utility classes: `.spinner`, `.fade-in`, `.shake`, `.slide-up`, `.card-hover`
-  - [ ] Modal overlay: `.modal-overlay { backdrop-filter: blur(4px); }`
-  - [ ] Responsive typography for mobile (max-width: 768px)
+- [x] Create `assets/css/styles.css` with:
+  - [x] CSS variables: `--color-primary`, `--color-success`, `--color-danger`
+  - [x] Keyframe animations: `@keyframes spin`, `fadeIn`, `shake`, `slideUp`
+  - [x] Utility classes: `.spinner`, `.fade-in`, `.shake`, `.slide-up`, `.card-hover`
+  - [x] Modal overlay: `.modal-overlay { backdrop-filter: blur(4px); }`
+  - [x] Responsive typography for mobile (max-width: 768px)
 
 ---
 
 ## Phase 3: Home Page & Search Form
 
 ### Home Page Layout
-- [ ] Create `public/index.php` with:
-  - [ ] Require `includes/header.php`
-  - [ ] Require `includes/navbar.php`
-  - [ ] Hero section with background image and call-to-action
-  - [ ] Search form section (centered, prominent)
+- [x] Create `public/index.php` with:
+  - [x] Require `includes/header.php`
+  - [x] Require `includes/navbar.php`
+  - [x] Hero section with background image and call-to-action
+  - [x] Search form section (centered, prominent)
 
 ### Search Form Component
-- [ ] Create search form in `public/index.php` or `includes/search-form.php`:
-  - [ ] Input field: Equipment search term (placeholder: "e.g., Sony A7R IV")
-  - [ ] Dropdown: City selection (hardcoded or fetch from database)
-  - [ ] Date picker: Rental start date (HTML5 date input)
-  - [ ] Button: "Search" with data-action attribute
-  - [ ] Tailwind styling: grid layout, rounded inputs, primary button color
-- [ ] Add form ID and data attributes for JavaScript targeting
-- [ ] Add validation message container (hidden by default)
+- [x] Create search form in `public/index.php` or `includes/search-form.php`:
+  - [x] Input field: Equipment search term (placeholder: "e.g., Sony A7R IV")
+  - [x] Dropdown: City selection (hardcoded or fetch from database)
+  - [x] Date picker: Rental start date (HTML5 date input)
+  - [x] Button: "Search" with data-action attribute
+  - [x] Tailwind styling: grid layout, rounded inputs, primary button color
+- [x] Add form ID and data attributes for JavaScript targeting
+- [x] Add validation message container (hidden by default)
 
 ### JavaScript: Search Form Logic
-- [ ] Create `assets/js/search.js` with:
-  - [ ] Event listener on "Search" button click
-  - [ ] Client-side validation: search term (min 2 chars), city selected, date selected
-  - [ ] Show loading state on button: "Searching..." with spinner
-  - [ ] Send AJAX POST request to `/api/search-api.php`
-  - [ ] On success: redirect to `/public/results.php?q=[term]&city=[city]&date=[date]`
-  - [ ] On error: display error toast notification
+- [x] Create `assets/js/search.js` with:
+  - [x] Event listener on "Search" button click
+  - [x] Client-side validation: search term (min 2 chars), city selected, date selected
+  - [x] Show loading state on button: "Searching..." with spinner
+  - [x] Send AJAX POST request to `/api/search-api.php`
+  - [x] On success: redirect to `/public/results.php?q=[term]&city=[city]&date=[date]`
+  - [x] On error: display error toast notification
 
 ### Featured Gear Section (Optional)
-- [ ] Add "Popular Rentals" or "Featured Gear" section below search form
-- [ ] Display 4-6 random equipment items in a grid
-- [ ] Each item card shows: image, equipment name, shop name, rating, daily rate, "Check Availability" button
+- [x] Add "Popular Rentals" or "Featured Gear" section below search form
+- [x] Display 4-6 random equipment items in a grid
+- [x] Each item card shows: image, equipment name, shop name, rating, daily rate, "Check Availability" button
 
 ---
 
 ## Phase 4: Search Backend & API
 
 ### Search API Endpoint
-- [ ] Create `public/api/search-api.php` with:
-  - [ ] Validate incoming POST parameters: search_term, city, rental_date
-  - [ ] Sanitize inputs (trim, htmlspecialchars)
-  - [ ] Query database with full-text search on equipment_name, brand, model_number
-  - [ ] Filter by city (via shop's primary_city)
-  - [ ] Filter by availability (inventory.available_quantity > 0)
-  - [ ] Order results by: brand exact match DESC, daily_rate_lkr ASC, average_rating DESC
-  - [ ] Limit results to 50 items
-  - [ ] Return JSON response with success/error status and results array
-  - [ ] Log search to `search_logs` table for analytics
+- [x] Create `public/api/search-api.php` with:
+  - [x] Validate incoming POST parameters: search_term, city, rental_date
+  - [x] Sanitize inputs (trim, htmlspecialchars)
+  - [x] Query database with full-text search on equipment_name, brand, model_number
+  - [x] Filter by city (via shop's primary_city)
+  - [x] Filter by availability (inventory.available_quantity > 0)
+  - [x] Order results by: brand exact match DESC, daily_rate_lkr ASC, average_rating DESC
+  - [x] Limit results to 50 items
+  - [x] Return JSON response with success/error status and results array
+  - [x] Log search to `search_logs` table for analytics
 
 ### Database Query for Search
-- [ ] Write SQL query that:
-  - [ ] SELECTs equipment fields: equipment_id, equipment_name, brand, model_number, description, image_url
-  - [ ] JOINs with inventory table
-  - [ ] JOINs with shops table
-  - [ ] LEFT JOINs with shop_reviews for average_rating
-  - [ ] Uses WHERE clause with LIKE for search term
-  - [ ] Uses WHERE for city filter
-  - [ ] Uses WHERE for available_quantity > 0
-  - [ ] Uses FULLTEXT INDEX for better performance
-  - [ ] ORDER BY for relevance sorting
+- [x] Write SQL query that:
+  - [x] SELECTs equipment fields: equipment_id, equipment_name, brand, model_number, description, image_url
+  - [x] JOINs with inventory table
+  - [x] JOINs with shops table
+  - [x] LEFT JOINs with shop_reviews for average_rating
+  - [x] Uses WHERE clause with LIKE for search term
+  - [x] Uses WHERE for city filter
+  - [x] Uses WHERE for available_quantity > 0
+  - [x] Uses FULLTEXT INDEX for better performance
+  - [x] ORDER BY for relevance sorting
 
 ### Error Handling in API
-- [ ] Handle PDO connection errors gracefully
-- [ ] Handle empty search results (return success with empty array)
-- [ ] Handle invalid parameters (return error with 400 status code)
-- [ ] Log all API errors to `/logs/errors.log`
+- [x] Handle PDO connection errors gracefully
+- [x] Handle empty search results (return success with empty array)
+- [x] Handle invalid parameters (return error with 400 status code)
+- [x] Log all API errors to `/logs/errors.log`
 
 ---
 
 ## Phase 5: Results Page & Gear Cards
 
 ### Results Page Layout
-- [ ] Create `public/results.php` with:
-  - [ ] Require header and navbar
-  - [ ] Get query parameters: search_term, city, rental_date from URL
-  - [ ] Display search summary: "Results for '[term]' in [City] ([count] items found)"
-  - [ ] Results container (initially empty, populated by JavaScript)
-  - [ ] Empty state container (hidden, shown if no results)
-  - [ ] Pagination controls (if > 12 results)
+- [x] Create `public/results.php` with:
+  - [x] Require header and navbar
+  - [x] Get query parameters: search_term, city, rental_date from URL
+  - [x] Display search summary: "Results for '[term]' in [City] ([count] items found)"
+  - [x] Results container (initially empty, populated by JavaScript)
+  - [x] Empty state container (hidden, shown if no results)
+  - [x] Pagination controls (if > 12 results)
 
 ### Gear Card Component
-- [ ] Design equipment card layout with:
-  - [ ] Equipment image (placeholder if not available)
-  - [ ] Equipment name and brand (e.g., "Sony A7R IV")
-  - [ ] Shop name with star rating (e.g., "⭐ Pro Lens Rental - 4.8/5")
-  - [ ] Condition badge (Excellent, Good, Fair)
-  - [ ] Daily rate in LKR (e.g., "₹15,500 LKR/day")
-  - [ ] Availability badge ("In Stock")
-  - [ ] "Check Availability" button with data-action attribute
-  - [ ] Tailwind card styling: rounded corners, shadow, hover effects
+- [x] Design equipment card layout with:
+  - [x] Equipment image (placeholder if not available)
+  - [x] Equipment name and brand (e.g., "Sony A7R IV")
+  - [x] Shop name with star rating (e.g., "⭐ Pro Lens Rental - 4.8/5")
+  - [x] Condition badge (Excellent, Good, Fair)
+  - [x] Daily rate in LKR (e.g., "Rs 15,500 LKR/day")
+  - [x] Availability badge ("In Stock")
+  - [x] "Check Availability" button with data-action attribute
+  - [x] Tailwind card styling: rounded corners, shadow, hover effects
 
 ### Results Grid Display
 - [ ] Create `assets/js/results.js` with:

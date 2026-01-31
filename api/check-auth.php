@@ -1,4 +1,5 @@
 <?php
+include_once __DIR__ . '/../includes/nav.php';
 /**
  * API: Check Authentication Status
  * Returns whether current user is authenticated
