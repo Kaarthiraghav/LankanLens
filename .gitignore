@@ -10,7 +10,6 @@
 
 # Dependencies
 /node_modules
-/vendor
 
 # OS Files
 .DS_Store

@@ -87,34 +87,26 @@ try {
     // Extract and validate parameters
     $search_term = isset($input['search_term']) ? trim($input['search_term']) : '';
     $city = isset($input['city']) ? trim($input['city']) : '';
-    $rental_date = isset($input['rental_date']) ? trim($input['rental_date']) : '';
+    $rental_date = isset($input['rental_date']) ? trim($input['rental_date']) : null;
 
-    // Validate search term (minimum 2 characters)
-    if (strlen($search_term) < 2) {
+    // At least one of search_term or city must be provided
+    if (empty($search_term) && empty($city)) {
+        http_response_code(400);
+        $response['message'] = 'Please provide either a search term or select a city.';
+        echo json_encode($response);
+        exit;
+    }
+
+    // Validate search term length if provided
+    if (!empty($search_term) && strlen($search_term) < 2) {
         http_response_code(400);
         $response['message'] = 'Search term must be at least 2 characters.';
         echo json_encode($response);
         exit;
     }
 
-    // Validate city selection
-    if (empty($city)) {
-        http_response_code(400);
-        $response['message'] = 'City selection is required.';
-        echo json_encode($response);
-        exit;
-    }
-
-    // Validate rental date
-    if (empty($rental_date)) {
-        http_response_code(400);
-        $response['message'] = 'Rental date is required.';
-        echo json_encode($response);
-        exit;
-    }
-
-    // Validate date format
-    if (!strtotime($rental_date)) {
+    // Validate date format if provided
+    if (!empty($rental_date) && !strtotime($rental_date)) {
         http_response_code(400);
         $response['message'] = 'Invalid date format.';
         echo json_encode($response);
@@ -125,7 +117,7 @@ try {
     $search_term = htmlspecialchars($search_term, ENT_QUOTES, 'UTF-8');
     $city = htmlspecialchars($city, ENT_QUOTES, 'UTF-8');
 
-    // Build search query with full-text search and multiple filters
+    // Build search query dynamically based on provided parameters
     $query = "
         SELECT 
             e.equipment_id,
@@ -152,37 +144,59 @@ try {
         INNER JOIN shops s ON e.shop_id = s.shop_id
         LEFT JOIN shop_reviews sr ON s.shop_id = sr.shop_id
         LEFT JOIN equipment_categories ec ON e.category_id = ec.category_id
-        WHERE 
-            (
-                e.equipment_name LIKE ? 
-                OR e.brand LIKE ? 
-                OR e.model LIKE ?
-                OR e.description LIKE ?
-            )
-            AND s.city = ?
-            AND i.available_quantity > 0
-        GROUP BY e.equipment_id, i.inventory_id
-        ORDER BY 
-            CASE WHEN e.brand = ? THEN 0 ELSE 1 END ASC,
-            i.daily_rate_lkr ASC,
-            average_rating DESC
-        LIMIT 50
+        WHERE i.available_quantity > 0
     ";
 
-    // Create search pattern for LIKE queries
-    $searchPattern = '%' . $search_term . '%';
+    // Build WHERE conditions and parameters dynamically
+    $conditions = [];
+    $params = [];
+
+    // Add search term condition if provided
+    if (!empty($search_term)) {
+        $conditions[] = "(
+            e.equipment_name LIKE ? 
+            OR e.brand LIKE ? 
+            OR e.model LIKE ?
+            OR e.description LIKE ?
+        )";
+        $searchPattern = '%' . $search_term . '%';
+        $params[] = $searchPattern;
+        $params[] = $searchPattern;
+        $params[] = $searchPattern;
+        $params[] = $searchPattern;
+    }
+
+    // Add city condition if provided
+    if (!empty($city)) {
+        $conditions[] = "s.city = ?";
+        $params[] = $city;
+    }
+
+    // Append conditions to query
+    if (!empty($conditions)) {
+        $query .= " AND " . implode(" AND ", $conditions);
+    }
+
+    // Add GROUP BY and ORDER BY
+    $query .= " GROUP BY e.equipment_id, i.inventory_id ";
+    
+    // Order by: exact brand match first (if search term provided), then price, then rating
+    if (!empty($search_term)) {
+        $query .= " ORDER BY 
+            CASE WHEN e.brand = ? THEN 0 ELSE 1 END ASC,
+            i.daily_rate_lkr ASC,
+            average_rating DESC";
+        $params[] = $search_term;
+    } else {
+        $query .= " ORDER BY 
+            i.daily_rate_lkr ASC,
+            average_rating DESC";
+    }
+    
+    $query .= " LIMIT 50";
 
     // Execute query with prepared statements and error handling
     try {
-        $params = [
-            $searchPattern,
-            $searchPattern,
-            $searchPattern,
-            $searchPattern,
-            $city,
-            $search_term
-        ];
-
         // Use Database class to execute query
         $stmt = $db->query($query, $params);
 
@@ -196,20 +210,19 @@ try {
                 'model' => $row['model'],
                 'description' => $row['description'],
                 'condition' => $row['condition'],
-                'daily_rate' => (int)$row['daily_rate_lkr'],
-                'weekly_rate' => $row['weekly_rate_lkr'] ? (int)$row['weekly_rate_lkr'] : null,
-                'monthly_rate' => $row['monthly_rate_lkr'] ? (int)$row['monthly_rate_lkr'] : null,
+                'daily_rate_lkr' => (int)$row['daily_rate_lkr'],
+                'weekly_rate_lkr' => $row['weekly_rate_lkr'] ? (int)$row['weekly_rate_lkr'] : null,
+                'monthly_rate_lkr' => $row['monthly_rate_lkr'] ? (int)$row['monthly_rate_lkr'] : null,
                 'available_quantity' => (int)$row['available_quantity'],
-                'shop' => [
-                    'shop_id' => (int)$row['shop_id'],
-                    'shop_name' => $row['shop_name'],
-                    'city' => $row['city'],
-                    'phone' => $row['phone'],
-                    'whatsapp' => $row['whatsapp_number'],
-                    'rating' => round((float)$row['average_rating'], 1),
-                    'review_count' => (int)$row['review_count']
-                ],
-                'categories' => $row['categories']
+                'shop_id' => (int)$row['shop_id'],
+                'shop_name' => $row['shop_name'],
+                'shop_city' => $row['city'],
+                'shop_phone' => $row['phone'],
+                'shop_whatsapp' => $row['whatsapp_number'],
+                'average_rating' => round((float)$row['average_rating'], 1),
+                'review_count' => (int)$row['review_count'],
+                'categories' => $row['categories'],
+                'image_url' => null // Will be populated from equipment images if available
             ];
         }
 

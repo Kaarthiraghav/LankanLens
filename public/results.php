@@ -57,25 +57,36 @@ $is_logged_in = isLoggedIn();
         <!-- Empty State Container (Hidden by default) -->
         <div id="empty-state" class="hidden">
             <div class="bg-white rounded-lg shadow-md p-12 text-center">
-                <div class="text-6xl mb-4">🔍</div>
+                <!-- Camera with Question Mark SVG Icon -->
+                <div class="flex justify-center mb-6">
+                    <svg class="w-24 h-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <!-- Camera Body -->
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                        <!-- Camera Lens -->
+                        <circle cx="12" cy="13" r="3" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></circle>
+                        <!-- Question Mark -->
+                        <g transform="translate(16, 2)">
+                            <circle cx="3" cy="3" r="3" fill="currentColor" opacity="0.2"></circle>
+                            <text x="3" y="4.5" text-anchor="middle" font-size="4" font-weight="bold" fill="currentColor">?</text>
+                        </g>
+                    </svg>
+                </div>
+                
                 <h2 class="text-2xl font-bold text-gray-900 mb-2">
-                    No results found
+                    No results found for '<span class="font-semibold"><?php echo $search_term; ?></span>' in <?php echo $city; ?>
                 </h2>
-                <p class="text-gray-600 mb-6">
-                    We couldn't find any equipment matching "<span class="font-semibold"><?php echo $search_term; ?></span>" in <span class="font-semibold"><?php echo $city; ?></span>.
-                </p>
                 <p class="text-gray-600 mb-8">But don't worry! Here's what we recommend:</p>
                 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button id="search-nearby-btn" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium">
-                        Search in Nearby Cities
+                <div class="flex flex-col sm:flex-row gap-4 justify-center flex-wrap">
+                    <button data-action="search-all-cities" class="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium shadow-sm hover:shadow-md">
+                        🌍 Search in Nearby Cities
                     </button>
-                    <button id="browse-all-btn" class="px-6 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-                        View All Equipment
+                    <button data-action="view-all-equipment" class="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium shadow-sm hover:shadow-md">
+                        📷 View All Equipment
                     </button>
-                    <a href="<?php echo BASE_URL; ?>public/index.php" class="px-6 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-                        Try Another Search
-                    </a>
+                    <button data-action="try-another-search" class="px-6 py-3 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300 transition-colors font-medium shadow-sm hover:shadow-md">
+                        🔍 Try Another Search
+                    </button>
                 </div>
             </div>
         </div>

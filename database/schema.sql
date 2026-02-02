@@ -67,6 +67,7 @@ CREATE TABLE equipment (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES equipment_categories(category_id) ON DELETE CASCADE,
     FOREIGN KEY (shop_id) REFERENCES shops(shop_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_brand_model_category_shop (category_id, brand, model_number, shop_id),
     INDEX idx_brand (brand),
     INDEX idx_category (category_id),
     INDEX idx_shop (shop_id),

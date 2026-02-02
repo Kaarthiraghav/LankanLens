@@ -343,6 +343,110 @@ $daily_rate_formatted = number_format($equipment['daily_rate_lkr'], 0, '.', ',')
                 <?php endif; ?>
             </div>
         </div>
+
+        <!-- Customer Reviews Section -->
+        <?php
+        // Fetch shop reviews
+        $reviewsQuery = "
+            SELECT 
+                review_id,
+                user_name,
+                rating,
+                review_text,
+                created_at
+            FROM shop_reviews
+            WHERE shop_id = ?
+            ORDER BY created_at DESC
+            LIMIT 10
+        ";
+        $reviews = $db->fetchAll($reviewsQuery, [$equipment['shop_id']]);
+        
+        // Calculate average rating
+        $avgRatingQuery = "
+            SELECT 
+                COALESCE(AVG(rating), 0) as average_rating,
+                COUNT(*) as total_reviews
+            FROM shop_reviews
+            WHERE shop_id = ?
+        ";
+        $ratingStats = $db->fetchOne($avgRatingQuery, [$equipment['shop_id']]);
+        ?>
+        
+        <?php if (!empty($reviews) || $ratingStats['total_reviews'] > 0): ?>
+        <div class="mt-8">
+            <div class="bg-white rounded-lg p-6 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Customer Reviews</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-3xl font-bold text-yellow-500">
+                            <?php echo number_format($ratingStats['average_rating'], 1); ?>
+                        </span>
+                        <div>
+                            <div class="flex text-yellow-400">
+                                <?php
+                                $fullStars = floor($ratingStats['average_rating']);
+                                $hasHalfStar = ($ratingStats['average_rating'] - $fullStars) >= 0.5;
+                                
+                                for ($i = 0; $i < $fullStars; $i++) {
+                                    echo '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>';
+                                }
+                                if ($hasHalfStar) {
+                                    echo '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" opacity="0.5"></path></svg>';
+                                }
+                                for ($i = ceil($ratingStats['average_rating']); $i < 5; $i++) {
+                                    echo '<svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>';
+                                }
+                                ?>
+                            </div>
+                            <p class="text-sm text-gray-600"><?php echo $ratingStats['total_reviews']; ?> review<?php echo $ratingStats['total_reviews'] != 1 ? 's' : ''; ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (!empty($reviews)): ?>
+                <div class="space-y-6">
+                    <?php foreach ($reviews as $review): ?>
+                        <div class="border-b border-gray-200 pb-6 last:border-b-0 last:pb-0">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                                        <?php echo strtoupper(substr($review['user_name'], 0, 1)); ?>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-900"><?php echo htmlspecialchars($review['user_name']); ?></p>
+                                        <div class="flex text-yellow-400">
+                                            <?php for ($i = 0; $i < $review['rating']; $i++): ?>
+                                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                            <?php endfor; ?>
+                                            <?php for ($i = $review['rating']; $i < 5; $i++): ?>
+                                                <svg class="w-4 h-4 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                            <?php endfor; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="text-sm text-gray-500">
+                                    <?php echo date('M d, Y', strtotime($review['created_at'])); ?>
+                                </span>
+                            </div>
+                            <?php if ($review['review_text']): ?>
+                                <p class="text-gray-700 leading-relaxed ml-13">
+                                    <?php echo nl2br(htmlspecialchars($review['review_text'])); ?>
+                                </p>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php else: ?>
+                <div class="text-center py-8 text-gray-500">
+                    <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+                    </svg>
+                    <p>No reviews yet. Be the first to review this shop!</p>
+                </div>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
     </div>
 
     <!-- Footer -->
